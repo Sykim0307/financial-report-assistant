@@ -17,7 +17,7 @@
     <button type="button" class="nav-btn" data-target="about-screen">소개</button>
     <button type="button" class="nav-btn" data-target="input-screen">입력</button>
     <button type="button" class="nav-btn" data-target="result-screen">결과</button>
-    <button type="button" class="nav-btn" data-target="history-screen">히스토리</button>
+    <button type="button" class="nav-btn" data-target="history-screen">기록</button>
   </nav>
 </header>
 
@@ -49,7 +49,7 @@
     </article>
     <article class="result-block">
       <h3>어떻게 만들어져 있나요?</h3>
-      <p>별도 서버 없이 순수 HTML/CSS/JS로 동작하는 정적 웹앱입니다. 분석 요청은 Supabase의 서버리스 함수(Edge Function)를 거쳐 Claude에게 전달되고, 결과는 Supabase 데이터베이스와 이 브라우저의 히스토리에 함께 저장됩니다. Claude API 키는 서버 쪽에만 있고 <strong class="hl">이 브라우저에는 전혀 내려오지 않습니다</strong>.</p>
+      <p>별도 서버 없이 순수 HTML/CSS/JS로 동작하는 정적 웹앱입니다. 분석 요청은 Supabase의 서버리스 함수(Edge Function)를 거쳐 Claude에게 전달되고, 결과는 Supabase 데이터베이스와 이 브라우저의 기록에 함께 저장됩니다. Claude API 키는 서버 쪽에만 있고 <strong class="hl">이 브라우저에는 전혀 내려오지 않습니다</strong>.</p>
     </article>
     <article class="result-block">
       <h3>이런 용도로는 사용할 수 없어요</h3>
@@ -74,6 +74,11 @@
       <textarea id="text-input" rows="10" placeholder="분석할 리포트 텍스트를 붙여넣으세요"></textarea>
     </div>
     <button type="button" id="analyze-btn" class="primary-btn">분석 시작</button>
+    <div id="analyze-progress" class="progress-wrap" hidden>
+      <span class="spinner"></span>
+      <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
+      <span id="progress-percent" class="progress-percent">0%</span>
+    </div>
     <p id="analyze-status"></p>
   </section>
 
@@ -100,7 +105,7 @@
   </section>
 
   <section id="history-screen" class="screen">
-    <h2>히스토리</h2>
+    <h2>분석 기록</h2>
     <ul id="history-list" class="placeholder">
       <li>저장된 분석 기록이 없습니다.</li>
     </ul>
@@ -112,7 +117,7 @@
   <button type="button" class="history-peek-card" data-target="history-screen">
     <span class="history-peek-icon">📖</span>
     <span class="history-peek-title">결과는 이렇게 저장돼요</span>
-    <span class="history-peek-desc">분석 결과는 히스토리 탭에 자동으로 쌓여서 언제든 다시 열어볼 수 있어요.</span>
+    <span class="history-peek-desc">분석 결과는 기록 탭에 자동으로 쌓여서 언제든 다시 열어볼 수 있어요.</span>
   </button>
 </aside>
 

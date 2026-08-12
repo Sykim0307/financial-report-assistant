@@ -106,6 +106,7 @@ async function saveAnalysisToDb({ sourceName, sourceType, inputText, truncated, 
 
 const navButtons = document.querySelectorAll(".nav-btn");
 const screens = document.querySelectorAll(".screen");
+const sideRails = document.querySelectorAll(".side-rail");
 
 function showScreen(targetId) {
   screens.forEach((screen) => {
@@ -113,6 +114,9 @@ function showScreen(targetId) {
   });
   navButtons.forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.target === targetId);
+  });
+  sideRails.forEach((rail) => {
+    rail.classList.toggle("is-visible", targetId === "input-screen");
   });
 }
 
@@ -280,6 +284,45 @@ function renderHistory() {
   });
 }
 
+// ---------- 분석 진행률 (실제 진행률을 알 수 없어 추정치를 보여준다) ----------
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function startProgressSimulation() {
+  const wrapEl = document.getElementById("analyze-progress");
+  const fillEl = document.getElementById("progress-fill");
+  const percentEl = document.getElementById("progress-percent");
+
+  let percent = 0;
+  fillEl.style.width = "0%";
+  percentEl.textContent = "0%";
+  wrapEl.hidden = false;
+
+  // 92%까지는 점점 느려지며 채워지고, 실제로 끝나면 finish()가 100%로 마무리한다.
+  const intervalId = setInterval(() => {
+    percent += (92 - percent) * 0.06;
+    const rounded = Math.min(92, Math.round(percent));
+    fillEl.style.width = rounded + "%";
+    percentEl.textContent = rounded + "%";
+  }, 200);
+
+  return {
+    async finish() {
+      clearInterval(intervalId);
+      fillEl.style.width = "100%";
+      percentEl.textContent = "100%";
+      await sleep(300);
+      wrapEl.hidden = true;
+    },
+    stop() {
+      clearInterval(intervalId);
+      wrapEl.hidden = true;
+    },
+  };
+}
+
 // ---------- 분석 시작 ----------
 
 const analyzeBtn = document.getElementById("analyze-btn");
@@ -304,11 +347,13 @@ analyzeBtn.addEventListener("click", async () => {
 
   analyzeBtn.disabled = true;
   statusEl.textContent = "분석 중입니다... (문서 길이에 따라 수십 초 걸릴 수 있습니다)";
+  const progress = startProgressSimulation();
 
   const startedAt = Date.now();
   try {
     const result = await callClaudeAnalysis(text);
     const durationMs = Date.now() - startedAt;
+    await progress.finish();
 
     renderResult(result);
 
@@ -337,6 +382,7 @@ analyzeBtn.addEventListener("click", async () => {
     statusEl.textContent = `분석 완료 (${(durationMs / 1000).toFixed(1)}초)${truncatedNote}`;
     showScreen("result-screen");
   } catch (e) {
+    progress.stop();
     console.error(e);
     statusEl.textContent = "분석 실패: " + e.message;
     statusEl.classList.add("error");
