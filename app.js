@@ -124,7 +124,7 @@ function addHistoryEntry(entry) {
 
 // ---------- Supabase 저장 ----------
 
-async function saveAnalysisToDb({ sourceName, sourceType, inputText, truncated, result, model, durationMs }) {
+async function saveAnalysisToDb({ sourceName, sourceType, inputText, truncated, result, model, durationMs, textHash }) {
   try {
     const { data: analysisRow, error: analysisError } = await supabaseClient
       .from("analyses")
@@ -140,6 +140,7 @@ async function saveAnalysisToDb({ sourceName, sourceType, inputText, truncated, 
         summary: result.summary_points.join("\n"),
         model,
         duration_ms: durationMs,
+        text_hash: textHash,
       })
       .select()
       .single();
@@ -248,17 +249,64 @@ document.getElementById("logo-link").addEventListener("click", () => showScreen(
 
 // ---------- PDF 업로드 (pdf.js) ----------
 
+// 페이지를 y좌표로 줄 단위로 묶은 뒤, 페이지 절반 이상에서 똑같이 반복되는 줄(머리말/꼬리말/
+// 반복 면책조항)과 "12", "Page 12", "- 12 -" 같은 페이지 번호 패턴을 제거한다. 리포트 형식
+// 문서는 이런 반복 요소가 페이지마다 붙어 실제 분석에 필요 없는 토큰을 계속 잡아먹는다.
+const PAGE_NUMBER_PATTERN = /^(page\s*)?\d{1,4}(\s*\/\s*\d{1,4})?(\s*페이지)?$|^-\s*\d{1,4}\s*-$/i;
+
+function groupItemsIntoLines(items) {
+  const rows = new Map();
+  items.forEach((item) => {
+    const y = Math.round(item.transform[5]);
+    if (!rows.has(y)) rows.set(y, []);
+    rows.get(y).push(item);
+  });
+  const sortedYs = [...rows.keys()].sort((a, b) => b - a);
+  return sortedYs
+    .map((y) =>
+      rows
+        .get(y)
+        .sort((a, b) => a.transform[4] - b.transform[4])
+        .map((it) => it.str)
+        .join(" ")
+        .trim()
+    )
+    .filter((line) => line.length > 0);
+}
+
+function removeRepeatedBoilerplate(pageLines) {
+  if (pageLines.length < 3) return pageLines; // 페이지가 적으면 "반복" 판정이 의미 없음
+  const lineCounts = new Map();
+  pageLines.forEach((lines) => {
+    new Set(lines).forEach((line) => {
+      lineCounts.set(line, (lineCounts.get(line) || 0) + 1);
+    });
+  });
+  const majorityThreshold = Math.ceil(pageLines.length * 0.5);
+  const boilerplateLines = new Set(
+    [...lineCounts.entries()].filter(([, count]) => count >= majorityThreshold).map(([line]) => line)
+  );
+  return pageLines.map((lines) =>
+    lines.filter((line) => !boilerplateLines.has(line) && !PAGE_NUMBER_PATTERN.test(line.trim()))
+  );
+}
+
 async function extractPdfText(file) {
   const pdfjsLib = await loadPdfJsLib();
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  const pageTexts = [];
+  const pageLines = [];
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
     const page = await pdf.getPage(pageNum);
     const content = await page.getTextContent();
-    pageTexts.push(content.items.map((item) => item.str).join(" "));
+    pageLines.push(groupItemsIntoLines(content.items));
   }
-  return { text: pageTexts.join("\n\n").trim(), numPages: pdf.numPages };
+  const cleanedPages = removeRepeatedBoilerplate(pageLines);
+  const text = cleanedPages
+    .map((lines) => lines.join("\n"))
+    .join("\n\n")
+    .trim();
+  return { text, numPages: pdf.numPages };
 }
 
 const fileInput = document.getElementById("file-input");
@@ -310,9 +358,9 @@ sampleBtn.addEventListener("click", () => {
 // Anthropic API 키는 브라우저에 두지 않는다. Edge Function(analyze-report)이
 // 서버 측 시크릿(ANTHROPIC_API_KEY)으로 Claude를 호출하고 결과만 돌려준다.
 
-async function callClaudeAnalysis(sourceText) {
+async function callClaudeAnalysis(sourceText, persona) {
   const { data, error } = await supabaseClient.functions.invoke("analyze-report", {
-    body: { text: sourceText },
+    body: { text: sourceText, persona },
   });
 
   if (error) {
@@ -418,6 +466,35 @@ function renderInsightMix(insights) {
   document.getElementById("count-neutral").textContent = counts.neutral;
 }
 
+// ---------- 원문 패널 + 근거 하이라이트 (데스크톱 2컬럼 레이아웃) ----------
+
+let currentSourceText = "";
+
+function renderSourceText(text) {
+  currentSourceText = text || "";
+  const el = document.getElementById("source-text");
+  el.textContent = currentSourceText || "원문을 표시할 수 없습니다.";
+}
+
+function highlightInSource(quote) {
+  const paneEl = document.getElementById("source-pane");
+  const el = document.getElementById("source-text");
+  if (!currentSourceText || !quote || !paneEl.offsetParent) return;
+
+  const idx = currentSourceText.indexOf(quote);
+  if (idx === -1) return; // 모델이 원문과 살짝 다르게 인용했을 경우 조용히 무시
+
+  const before = currentSourceText.slice(0, idx);
+  const match = currentSourceText.slice(idx, idx + quote.length);
+  const after = currentSourceText.slice(idx + quote.length);
+  el.innerHTML = `${escapeHtml(before)}<mark id="source-highlight" class="source-highlight">${escapeHtml(match)}</mark>${escapeHtml(after)}`;
+
+  const markEl = document.getElementById("source-highlight");
+  markEl.scrollIntoView({ behavior: "smooth", block: "center" });
+  markEl.classList.add("flash");
+  setTimeout(() => markEl.classList.remove("flash"), 1200);
+}
+
 function renderResult(result) {
   const titleEl = document.getElementById("report-title-output");
   titleEl.textContent = result.report_title;
@@ -447,6 +524,7 @@ function renderResult(result) {
       <div>${escapeHtml(kw.plain_explanation)}</div>
       <div class="quote">근거: ${escapeHtml(kw.source_quote)}</div>
     `;
+    card.addEventListener("click", () => highlightInSource(kw.source_quote));
     keywordsEl.appendChild(card);
   });
 
@@ -462,14 +540,15 @@ function renderResult(result) {
       ${escapeHtml(ins.insight)}
       <div class="quote">근거: ${escapeHtml(ins.source_quote)}</div>
     `;
+    li.addEventListener("click", () => highlightInSource(ins.source_quote));
     insightsEl.appendChild(li);
   });
 }
 
 const CATEGORY_LABELS = {
-  opportunity: "기회",
-  risk: "리스크",
-  neutral: "참고",
+  opportunity: "↑ 기회",
+  risk: "↓ 리스크",
+  neutral: "i 참고",
 };
 
 function escapeHtml(str) {
@@ -487,7 +566,7 @@ async function fetchRecentAnalyses() {
   const { data, error } = await supabaseClient
     .from("analyses")
     .select(
-      `id, created_at, source_name, report_title, summary, model, duration_ms, key_metrics,
+      `id, created_at, source_name, report_title, summary, model, duration_ms, key_metrics, input_text,
        analysis_keywords ( term, plain_explanation, source_quote, position ),
        analysis_insights ( insight, category, source_quote, position )`
     )
@@ -500,6 +579,7 @@ async function fetchRecentAnalyses() {
     id: row.id,
     createdAt: new Date(row.created_at).toLocaleString("ko-KR"),
     sourceName: row.source_name,
+    inputText: row.input_text,
     durationMs: row.duration_ms,
     result: {
       report_title: row.report_title,
@@ -528,9 +608,59 @@ function renderHistoryPeekCards(list) {
   });
 }
 
+// ---------- 금융 문해력 레벨 ----------
+
+const LEVELS = [
+  { min: 0, title: "주린이" },
+  { min: 3, title: "금융 꿈나무" },
+  { min: 10, title: "시장 분석가" },
+  { min: 25, title: "오마하의 현인" },
+];
+
+function getLevelInfo(count) {
+  let current = LEVELS[0];
+  let next = null;
+  for (let i = 0; i < LEVELS.length; i++) {
+    if (count >= LEVELS[i].min) {
+      current = LEVELS[i];
+      next = LEVELS[i + 1] || null;
+    }
+  }
+  return { title: current.title, next };
+}
+
+async function renderLevelBadge() {
+  const box = document.getElementById("level-box");
+  let count = 0;
+  try {
+    if (currentUser) {
+      const { count: dbCount, error } = await supabaseClient
+        .from("analyses")
+        .select("id", { count: "exact", head: true });
+      if (error) throw error;
+      count = dbCount || 0;
+    } else {
+      count = loadHistory().length;
+    }
+  } catch (e) {
+    console.error("레벨 계산용 분석 건수 조회 실패:", e);
+    box.hidden = true;
+    return;
+  }
+
+  const { title, next } = getLevelInfo(count);
+  const toNext = next ? `다음 레벨 "${next.title}"까지 ${next.min - count}건 남았어요.` : "최고 레벨을 달성했어요!";
+  box.hidden = false;
+  box.innerHTML = `
+    <span class="level-badge">🏅 ${escapeHtml(title)}</span>
+    <span class="level-detail">분석 ${count}건 · ${escapeHtml(toNext)}</span>
+  `;
+}
+
 // ---------- 히스토리 렌더링 ----------
 
 async function renderHistory() {
+  renderLevelBadge();
   const historyList = document.getElementById("history-list");
   let list;
   try {
@@ -556,6 +686,7 @@ async function renderHistory() {
     li.textContent = `${title} · ${entry.createdAt} (${entry.durationMs}ms)`;
     li.addEventListener("click", () => {
       renderResult(entry.result);
+      renderSourceText(entry.inputText || "");
       showFeedbackBox(entry.id);
       showScreen("result-screen");
     });
@@ -628,13 +759,15 @@ analyzeBtn.addEventListener("click", async () => {
   statusEl.textContent = "분석 중입니다... (문서 길이에 따라 수십 초 걸릴 수 있습니다)";
   const progress = startProgressSimulation();
 
+  const persona = document.getElementById("persona-select").value;
   const startedAt = Date.now();
   try {
-    const result = await callClaudeAnalysis(text);
+    const result = await callClaudeAnalysis(text, persona);
     const durationMs = Date.now() - startedAt;
     await progress.finish();
 
     renderResult(result);
+    renderSourceText(text);
 
     const sourceName = fileInput.files[0] ? fileInput.files[0].name : "직접 입력";
     const sourceType = fileInput.files[0] ? "pdf" : "text";
@@ -656,10 +789,12 @@ analyzeBtn.addEventListener("click", async () => {
       result,
       model: result.model,
       durationMs,
+      textHash: result.text_hash || null,
     });
     showFeedbackBox(savedId);
 
-    statusEl.textContent = `분석 완료 (${(durationMs / 1000).toFixed(1)}초)${truncatedNote}`;
+    const cachedNote = result.cached ? " ⚡ 이전에 분석한 것과 같은 문서라 캐시된 결과를 바로 보여드려요." : "";
+    statusEl.textContent = `분석 완료 (${(durationMs / 1000).toFixed(1)}초)${truncatedNote}${cachedNote}`;
     if (result.usage) {
       renderUsage(result.usage);
     } else {

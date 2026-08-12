@@ -93,12 +93,20 @@
       <label for="text-input">텍스트 붙여넣기</label>
       <textarea id="text-input" rows="10" placeholder="분석할 리포트 텍스트를 붙여넣으세요"></textarea>
     </div>
+    <div class="field">
+      <label for="persona-select">설명 스타일</label>
+      <select id="persona-select">
+        <option value="friendly" selected>🙂 친절한 설명 (기본)</option>
+        <option value="trader">⚡ 바쁜 월가 트레이더 (결론만 간결하게)</option>
+        <option value="witty">😏 재치있는 클로드 (위트 있는 한 줄 평 포함)</option>
+      </select>
+    </div>
     <div class="analyze-row">
       <button type="button" id="analyze-btn" class="primary-btn">분석 시작</button>
       <span id="usage-indicator" class="usage-indicator"></span>
     </div>
     <div id="analyze-progress" class="progress-wrap" hidden>
-      <span class="spinner"></span>
+      <span class="spinner" aria-hidden="true">🔍</span>
       <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
       <span id="progress-percent" class="progress-percent">0%</span>
     </div>
@@ -107,43 +115,51 @@
 
   <section id="result-screen" class="screen">
     <h2>분석 결과</h2>
-    <p id="report-title-output" class="report-title placeholder">아직 분석한 보고서가 없습니다.</p>
-    <div id="stat-tile-row" class="stat-tile-row" hidden></div>
-    <div id="insight-mix" class="insight-mix" hidden>
-      <div class="insight-mix-bar">
-        <div id="insight-mix-seg-opportunity" class="insight-mix-seg insight-mix-seg--opportunity"></div>
-        <div id="insight-mix-seg-risk" class="insight-mix-seg insight-mix-seg--risk"></div>
-        <div id="insight-mix-seg-neutral" class="insight-mix-seg insight-mix-seg--neutral"></div>
+    <div class="result-layout">
+      <aside id="source-pane" class="source-pane">
+        <h3 class="source-pane-title">📄 원문 <span class="source-pane-hint">(키워드·인사이트를 누르면 여기서 근거 문장을 보여줘요)</span></h3>
+        <div id="source-text" class="source-text">아직 분석한 원문이 없습니다.</div>
+      </aside>
+      <div class="result-main">
+        <p id="report-title-output" class="report-title placeholder">아직 분석한 보고서가 없습니다.</p>
+        <div id="stat-tile-row" class="stat-tile-row" hidden></div>
+        <div id="insight-mix" class="insight-mix" hidden>
+          <div class="insight-mix-bar">
+            <div id="insight-mix-seg-opportunity" class="insight-mix-seg insight-mix-seg--opportunity"></div>
+            <div id="insight-mix-seg-risk" class="insight-mix-seg insight-mix-seg--risk"></div>
+            <div id="insight-mix-seg-neutral" class="insight-mix-seg insight-mix-seg--neutral"></div>
+          </div>
+          <div class="insight-mix-legend">
+            <span class="insight-mix-legend-item"><span class="dot dot--opportunity"></span>↑ 기회 <b id="count-opportunity">0</b></span>
+            <span class="insight-mix-legend-item"><span class="dot dot--risk"></span>↓ 리스크 <b id="count-risk">0</b></span>
+            <span class="insight-mix-legend-item"><span class="dot dot--neutral"></span>i 참고 <b id="count-neutral">0</b></span>
+          </div>
+        </div>
+        <div class="result-grid">
+          <article class="result-block">
+            <h3>🧾 쉬운 요약</h3>
+            <ul id="summary-output" class="placeholder">
+              <li>아직 분석 결과가 없습니다.</li>
+            </ul>
+          </article>
+          <article class="result-block">
+            <h3>🔑 키워드 설명</h3>
+            <div id="keywords-output" class="placeholder">아직 분석 결과가 없습니다.</div>
+          </article>
+          <article class="result-block">
+            <h3>💡 인사이트</h3>
+            <ul id="insights-output" class="placeholder">
+              <li>아직 분석 결과가 없습니다.</li>
+            </ul>
+          </article>
+        </div>
+        <div id="feedback-box" class="feedback-box" hidden>
+          <span class="feedback-question">이 분석이 도움이 되었나요?</span>
+          <button type="button" id="feedback-up" class="feedback-btn">👍 도움됐어요</button>
+          <button type="button" id="feedback-down" class="feedback-btn">👎 아쉬워요</button>
+          <span id="feedback-thanks" class="feedback-thanks" hidden>피드백 감사합니다!</span>
+        </div>
       </div>
-      <div class="insight-mix-legend">
-        <span class="insight-mix-legend-item"><span class="dot dot--opportunity"></span>기회 <b id="count-opportunity">0</b></span>
-        <span class="insight-mix-legend-item"><span class="dot dot--risk"></span>리스크 <b id="count-risk">0</b></span>
-        <span class="insight-mix-legend-item"><span class="dot dot--neutral"></span>참고 <b id="count-neutral">0</b></span>
-      </div>
-    </div>
-    <div class="result-grid">
-      <article class="result-block">
-        <h3>🧾 쉬운 요약</h3>
-        <ul id="summary-output" class="placeholder">
-          <li>아직 분석 결과가 없습니다.</li>
-        </ul>
-      </article>
-      <article class="result-block">
-        <h3>🔑 키워드 설명</h3>
-        <div id="keywords-output" class="placeholder">아직 분석 결과가 없습니다.</div>
-      </article>
-      <article class="result-block">
-        <h3>💡 인사이트</h3>
-        <ul id="insights-output" class="placeholder">
-          <li>아직 분석 결과가 없습니다.</li>
-        </ul>
-      </article>
-    </div>
-    <div id="feedback-box" class="feedback-box" hidden>
-      <span class="feedback-question">이 분석이 도움이 되었나요?</span>
-      <button type="button" id="feedback-up" class="feedback-btn">👍 도움됐어요</button>
-      <button type="button" id="feedback-down" class="feedback-btn">👎 아쉬워요</button>
-      <span id="feedback-thanks" class="feedback-thanks" hidden>피드백 감사합니다!</span>
     </div>
   </section>
 
@@ -180,6 +196,7 @@
 
   <section id="history-screen" class="screen">
     <h2>분석 기록</h2>
+    <div id="level-box" class="level-box" hidden></div>
     <ul id="history-list" class="placeholder">
       <li>저장된 분석 기록이 없습니다.</li>
     </ul>
@@ -196,6 +213,10 @@
 </aside>
 
 </div>
+
+<footer class="app-footer">
+  FinDecode는 정보 참고용이며 투자 자문이 아닙니다. 최종 판단 책임은 사용자에게 있습니다.
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="app.js"></script>

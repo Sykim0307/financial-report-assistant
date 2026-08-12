@@ -1,31 +1,36 @@
-/* DESIGN.md 기준 (SaaS 대시보드 다크 시스템) 적용.
-   이전 BMW M 톤(순검정·풀블리드 사진 전제)은 사진이 없는 텍스트 중심 도구에 맞지 않아
-   폐기했다. 대신 얕은 표면 레이어 + 그림자로 입체감을 만들고, 인디고 액센트 하나로
-   활성 상태/CTA/포커스를 통일한다. 상세 근거는 DESIGN.md 참고. */
+/* 로고 기반 라이트 테마 (2026-08-12 리브랜딩).
+   이전 어두운 SaaS 톤(인디고 액센트)은 로고의 Deep Blue/Teal Green/Gold 배색과
+   맞지 않아 폐기했다. 표면은 흰색 카드 + 옅은 그림자로 입체감을 주고, Teal Green을
+   상호작용(활성 탭/포커스/링크) 색으로, Gold를 CTA 버튼 전용 색으로 분리해 쓴다.
+   인사이트 상태색(기회/리스크/참고)은 옅은 배경 + 진한 텍스트 조합으로 통일한다. */
 
 :root {
-  --canvas: #0a0b0f;
-  --surface-1: #121319;
-  --surface-2: #191b22;
-  --surface-3: #22242e;
+  --canvas: #f7f9fa;
+  --surface-1: #ffffff;
+  --surface-2: #ffffff;
+  --surface-3: #f1f3f5;
 
-  --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.16);
+  --border: rgba(15, 37, 55, 0.1);
+  --border-strong: rgba(15, 37, 55, 0.22);
 
-  --text: #f2f3f7;
-  --text-muted: #9296a8;
-  --text-faint: #5c6072;
+  --text: #0f2537;
+  --text-muted: #52616f;
+  --text-faint: #8a97a0;
 
-  --accent: #6c6ff2;
-  --accent-hover: #7d80f5;
-  --accent-soft: rgba(108, 111, 242, 0.16);
+  --accent: #00897b;
+  --accent-hover: #00695c;
+  --accent-soft: rgba(0, 137, 123, 0.12);
 
-  --success: #34d399;
-  --success-soft: rgba(52, 211, 153, 0.14);
-  --danger: #f87171;
-  --danger-soft: rgba(248, 113, 113, 0.14);
-  --neutral: #9296a8;
-  --neutral-soft: rgba(146, 150, 168, 0.14);
+  --cta: #ffb300;
+  --cta-hover: #ffa000;
+  --cta-text: #0f2537;
+
+  --success: #2e7d32;
+  --success-soft: #e8f5e9;
+  --danger: #c62828;
+  --danger-soft: #ffebee;
+  --neutral: #455a64;
+  --neutral-soft: #eceff1;
 
   --radius-sm: 6px;
   --radius-md: 8px;
@@ -40,8 +45,8 @@
   --space-xl: 32px;
   --space-xxl: 48px;
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -16px rgba(0, 0, 0, 0.5);
-  --shadow-card-hover: 0 1px 2px rgba(0, 0, 0, 0.35), 0 12px 28px -14px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 1px 2px rgba(15, 37, 55, 0.06), 0 6px 20px -10px rgba(15, 37, 55, 0.15);
+  --shadow-card-hover: 0 2px 4px rgba(15, 37, 55, 0.08), 0 10px 24px -10px rgba(15, 37, 55, 0.2);
 }
 
 * {
@@ -283,6 +288,16 @@ body {
   line-height: 1.5;
 }
 
+.app-footer {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--space-md) var(--space-lg) var(--space-lg);
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-faint);
+  border-top: 1px solid var(--border);
+}
+
 main {
   max-width: 720px;
   min-width: 0;
@@ -341,7 +356,7 @@ main.main--wide {
   line-height: 1.45;
 }
 
-textarea, input[type="file"] {
+textarea, input[type="file"], select {
   padding: 10px 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -355,10 +370,14 @@ textarea, input[type="file"] {
   max-width: 100%;
 }
 
-textarea:focus, input:focus {
+textarea:focus, input:focus, select:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+select {
+  cursor: pointer;
 }
 
 textarea::placeholder, input::placeholder {
@@ -389,8 +408,8 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .primary-btn {
-  background: var(--accent);
-  color: #ffffff;
+  background: var(--cta);
+  color: var(--cta-text);
   border: none;
   padding: 11px 24px;
   min-height: 44px;
@@ -398,15 +417,15 @@ input[type="file"]::file-selector-button:hover {
   border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   font-family: inherit;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 2px rgba(15, 37, 55, 0.2);
   transition: background-color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
 
 .primary-btn:hover {
-  background: var(--accent-hover);
-  box-shadow: 0 4px 14px -4px rgba(108, 111, 242, 0.5);
+  background: var(--cta-hover);
+  box-shadow: 0 4px 14px -4px rgba(255, 179, 0, 0.6);
 }
 
 .primary-btn:active {
@@ -471,18 +490,19 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .spinner {
-  width: 16px;
-  height: 16px;
+  display: inline-block;
   flex-shrink: 0;
-  border: 2px solid var(--border-strong);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
+  font-size: 18px;
+  line-height: 1;
+  animation: spinner-scan 1.3s ease-in-out infinite;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+@keyframes spinner-scan {
+  0%, 100% {
+    transform: translateX(-4px) rotate(-10deg);
+  }
+  50% {
+    transform: translateX(4px) rotate(10deg);
   }
 }
 
@@ -524,6 +544,14 @@ input[type="file"]::file-selector-button:hover {
 
 #analyze-status.error {
   color: var(--danger);
+  background: var(--danger-soft);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+#analyze-status.error::before {
+  content: "⚠️ ";
 }
 
 .result-block .placeholder,
@@ -690,6 +718,75 @@ input[type="file"]::file-selector-button:hover {
   background: var(--neutral);
 }
 
+.result-layout {
+  display: block;
+}
+
+.source-pane {
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  .result-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: var(--space-lg);
+    align-items: start;
+  }
+
+  .source-pane {
+    display: block;
+    position: sticky;
+    top: calc(64px + var(--space-lg));
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+  }
+}
+
+.source-pane {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-md);
+}
+
+.source-pane-title {
+  margin: 0 0 var(--space-sm);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.source-pane-hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-faint);
+}
+
+.source-text {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.source-highlight {
+  background: var(--cta);
+  color: var(--cta-text);
+  border-radius: 3px;
+  padding: 1px 2px;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+.source-highlight.flash {
+  background: var(--accent);
+  color: #ffffff;
+}
+
 .result-grid {
   display: block;
 }
@@ -796,13 +893,21 @@ input[type="file"]::file-selector-button:hover {
 .keyword-card {
   background: transparent;
   border: none;
-  padding: var(--space-sm) 0;
+  padding: var(--space-sm);
+  margin: 0 calc(var(--space-sm) * -1);
+  border-radius: var(--radius-sm);
   border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.keyword-card:hover {
+  background: var(--surface-3);
 }
 
 .keyword-card:last-child {
   border-bottom: none;
-  padding-bottom: 0;
+  padding-bottom: var(--space-sm);
 }
 
 .keyword-card .term {
@@ -825,14 +930,22 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .insight-item {
-  padding: var(--space-sm) 0;
+  padding: var(--space-sm);
+  margin: 0 calc(var(--space-sm) * -1);
+  border-radius: var(--radius-sm);
   border-bottom: 1px solid var(--border);
   overflow-wrap: break-word;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.insight-item:hover {
+  background: var(--surface-3);
 }
 
 .insight-item:last-child {
   border-bottom: none;
-  padding-bottom: 0;
+  padding-bottom: var(--space-sm);
 }
 
 .badge {
@@ -1051,6 +1164,34 @@ input[type="file"]::file-selector-button:hover {
   padding: var(--space-md);
   background: transparent;
   border: none;
+}
+
+.level-box {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  background: linear-gradient(135deg, var(--accent-soft), var(--surface-2));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-md) var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.level-box[hidden] {
+  display: none;
+}
+
+.level-badge {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.level-detail {
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 /* ---------- 히스토리 화면 ---------- */
