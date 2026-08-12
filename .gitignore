@@ -26,3 +26,6 @@ Thumbs.db
 # large external source documents (copyright / repo size)
 한국은행_경제전망보고서_2026년5월.pdf
 한국은행_경제전망보고서_2026년5월_텍스트.txt
+
+# local dev helper (not part of the deployed app)
+_local_server.ps1
