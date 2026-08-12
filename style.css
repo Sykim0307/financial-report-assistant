@@ -64,14 +64,23 @@ body {
   background: var(--surface-1);
   border-bottom: 1px solid var(--border);
   padding: var(--space-sm) var(--space-lg);
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
   gap: var(--space-sm);
   position: sticky;
   top: 0;
   z-index: 10;
+}
+
+.app-header h1.logo {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.screen-nav {
+  grid-column: 2;
+  justify-self: center;
 }
 
 .app-header h1 {
@@ -97,6 +106,13 @@ body {
   flex-shrink: 0;
 }
 
+.logo-sub {
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 .screen-nav {
   display: flex;
   gap: var(--space-xxs);
@@ -110,10 +126,10 @@ body {
   background: transparent;
   color: var(--text-muted);
   border: none;
-  padding: 7px 16px;
+  padding: 10px 22px;
   border-radius: var(--radius-full);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   font-family: inherit;
   transition: background-color 0.15s, color 0.15s;
@@ -426,6 +442,26 @@ input[type="file"]::file-selector-button:hover {
 
 /* ---------- 결과 화면 ---------- */
 
+.report-title {
+  margin: 0 0 var(--space-lg);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.report-title::before {
+  content: "📄 ";
+}
+
+.report-title.placeholder {
+  color: var(--text-faint);
+  font-weight: 400;
+}
+
+.report-title.placeholder::before {
+  content: "";
+}
+
 .result-grid {
   display: block;
 }
@@ -475,7 +511,7 @@ input[type="file"]::file-selector-button:hover {
 .result-block ul {
   margin: 0;
   color: var(--text-muted);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 400;
   overflow-wrap: break-word;
 }
@@ -627,6 +663,7 @@ input[type="file"]::file-selector-button:hover {
 
 @media (max-width: 600px) {
   .app-header {
+    display: flex;
     flex-direction: column;
     align-items: stretch;
     padding: var(--space-sm) var(--space-md);
@@ -634,6 +671,10 @@ input[type="file"]::file-selector-button:hover {
 
   .app-header h1 {
     font-size: 15px;
+  }
+
+  .logo-sub {
+    display: none;
   }
 
   .screen-nav {

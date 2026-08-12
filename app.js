@@ -68,6 +68,7 @@ async function saveAnalysisToDb({ sourceName, sourceType, inputText, truncated, 
         input_text: inputText,
         input_char_count: inputText.length,
         truncated,
+        report_title: result.report_title,
         summary: result.summary_points.join("\n"),
         model,
         duration_ms: durationMs,
@@ -181,8 +182,14 @@ async function callClaudeAnalysis(sourceText) {
   if (data?.error) {
     throw new Error(data.error);
   }
-  if (!Array.isArray(data?.summary_points) || data.summary_points.length === 0 || !Array.isArray(data.keywords) || !Array.isArray(data.insights)) {
-    throw new Error("모델 응답에 summary_points/keywords/insights가 모두 없습니다.");
+  if (
+    !data?.report_title ||
+    !Array.isArray(data.summary_points) ||
+    data.summary_points.length === 0 ||
+    !Array.isArray(data.keywords) ||
+    !Array.isArray(data.insights)
+  ) {
+    throw new Error("모델 응답에 report_title/summary_points/keywords/insights가 모두 없습니다.");
   }
   return data;
 }
@@ -190,6 +197,10 @@ async function callClaudeAnalysis(sourceText) {
 // ---------- 결과 렌더링 ----------
 
 function renderResult(result) {
+  const titleEl = document.getElementById("report-title-output");
+  titleEl.textContent = result.report_title;
+  titleEl.classList.remove("placeholder");
+
   const summaryEl = document.getElementById("summary-output");
   summaryEl.classList.remove("placeholder");
   summaryEl.innerHTML = "";
@@ -253,7 +264,7 @@ function renderHistoryPeekCards() {
   const list = loadHistory();
   const dynamicDescEls = document.querySelectorAll(".history-peek-desc[data-dynamic]");
   const text = list.length
-    ? `최근 분석: ${list[0].sourceName} · ${list[0].createdAt}`
+    ? `최근 분석: ${list[0].result?.report_title || list[0].sourceName} · ${list[0].createdAt}`
     : "분석이 끝나면 이 카드에서 최근 결과를 바로 확인할 수 있어요.";
   dynamicDescEls.forEach((el) => {
     el.textContent = text;
@@ -277,7 +288,8 @@ function renderHistory() {
 
   list.forEach((entry) => {
     const li = document.createElement("li");
-    li.textContent = `${entry.createdAt} · ${entry.sourceName} (${entry.durationMs}ms)`;
+    const title = entry.result?.report_title || entry.sourceName;
+    li.textContent = `${title} · ${entry.createdAt} (${entry.durationMs}ms)`;
     li.addEventListener("click", () => {
       renderResult(entry.result);
       showScreen("result-screen");
