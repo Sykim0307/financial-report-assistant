@@ -1,18 +1,38 @@
-/* DESIGN.md 기준 (Tesla 스타일 디자인 시스템) 적용.
-   Universal Sans는 시스템에 없으므로 DESIGN.md가 명시한 대체 스택(-apple-system, Arial)에
-   한글 표시를 위해 시스템 한글 폰트를 fallback으로 추가했다. */
+/* DESIGN.md 기준 (Notion 디자인 시스템 분석) 적용.
+   NotionInter는 시스템에 없어 Inter로 대체하고, 한글 표시를 위해 시스템 한글 폰트를
+   fallback으로 추가했다. */
 
 :root {
-  --electric-blue: #3E6AE1;
-  --electric-blue-hover: #3359bf;
-  --white: #FFFFFF;
-  --light-ash: #F4F4F4;
-  --carbon-dark: #171A20;
-  --graphite: #393C41;
-  --pewter: #5C5E62;
-  --silver-fog: #8E8E8E;
-  --cloud-gray: #EEEEEE;
-  --pale-silver: #D0D1D2;
+  --primary: #0075de;
+  --primary-active: #005bab;
+  --on-primary: #ffffff;
+  --canvas: #ffffff;
+  --canvas-soft: #f6f5f4;
+  --surface: #ffffff;
+  --ink: #000000;
+  --ink-secondary: #31302e;
+  --ink-muted: #615d59;
+  --ink-faint: #a39e98;
+  --hairline: #e6e6e6;
+  --accent-green: #1aae39;
+  --accent-orange: #dd5b00;
+
+  --radius-xs: 4px;
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  --space-xxs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 28px;
+  --space-xxl: 32px;
+
+  --shadow-1: 0 0.175px 1.041px rgba(0,0,0,0.01), 0 0.8px 2.925px rgba(0,0,0,0.02),
+              0 2.025px 7.847px rgba(0,0,0,0.027), 0 4px 18px rgba(0,0,0,0.04);
 }
 
 * {
@@ -21,63 +41,66 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, "Malgun Gothic", "Apple SD Gothic Neo", Arial, sans-serif;
-  background: var(--white);
-  color: var(--graphite);
-  font-size: 14px;
+  font-family: Inter, -apple-system, system-ui, "Malgun Gothic", "Apple SD Gothic Neo", "Segoe UI", Helvetica, Arial, sans-serif;
+  background: var(--canvas-soft);
+  color: var(--ink-secondary);
+  font-size: 16px;
   font-weight: 400;
-  line-height: 1.43;
+  line-height: 1.5;
 }
 
-/* ---------- 상단 내비게이션 ---------- */
-/* Tesla 원본은 히어로 이미지 위에 뜨는 투명 내비게이션이지만, 이 앱은 이미지가 없으므로
-   백색 배경 + 얇은 구분선으로 같은 "구조만 남기고 장식은 없다"는 원칙을 적용했다. */
+/* ---------- 상단 내비게이션 (nav-bar) ---------- */
 
 .app-header {
-  background: var(--white);
-  border-bottom: 1px solid var(--cloud-gray);
-  padding: 12px 24px;
+  background: var(--canvas);
+  border-bottom: 1px solid var(--hairline);
+  padding: var(--space-md);
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--space-sm);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .app-header h1 {
   margin: 0;
-  font-size: 17px;
-  font-weight: 500;
-  color: var(--carbon-dark);
-  letter-spacing: 0.02em;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.125px;
+  color: var(--ink);
 }
 
 .screen-nav {
   display: flex;
-  gap: 8px;
+  gap: var(--space-xs);
 }
 
 .nav-btn {
   background: transparent;
-  color: var(--carbon-dark);
+  color: var(--ink);
   border: none;
-  padding: 4px 16px;
-  min-height: 32px;
-  border-radius: 4px;
+  padding: 4px 14px;
+  min-height: 36px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   font-family: inherit;
-  transition: color 0.33s, background-color 0.33s;
+  transition: color 0.2s, background-color 0.2s;
 }
 
 .nav-btn:hover {
-  background: var(--light-ash);
+  background: var(--canvas-soft);
 }
 
 .nav-btn.active {
-  background: var(--carbon-dark);
-  color: var(--white);
+  background: var(--canvas-soft);
+  color: var(--primary);
+  font-weight: 600;
 }
 
 /* ---------- 레이아웃 ---------- */
@@ -85,7 +108,7 @@ body {
 main {
   max-width: 720px;
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: var(--space-xl) var(--space-md) var(--space-xxl);
 }
 
 .screen {
@@ -97,139 +120,159 @@ main {
 }
 
 .screen > h2 {
-  margin: 0 0 24px;
-  font-size: 20px;
-  font-weight: 500;
-  color: var(--carbon-dark);
+  margin: 0 0 var(--space-lg);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.27;
+  letter-spacing: -0.25px;
+  color: var(--ink);
 }
 
 /* ---------- 입력 화면 ---------- */
 
 .field {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-md);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-xs);
 }
 
 .field label {
-  font-weight: 500;
-  font-size: 14px;
-  color: var(--carbon-dark);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.33;
+  letter-spacing: 0.125px;
+  color: var(--ink-muted);
+  text-transform: uppercase;
 }
 
 .field small {
-  color: var(--pewter);
-  font-size: 12px;
+  color: var(--ink-faint);
+  font-size: 14px;
+  line-height: 1.43;
 }
 
 textarea, input[type="file"], input[type="password"] {
-  padding: 10px 12px;
-  border: 1px solid var(--pale-silver);
-  border-radius: 4px;
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: var(--radius-xs);
   font-family: inherit;
-  font-size: 14px;
-  color: var(--carbon-dark);
-  background: var(--white);
+  font-size: 15px;
+  line-height: 1.33;
+  color: var(--ink);
+  background: var(--surface);
   width: 100%;
   max-width: 100%;
 }
 
+textarea:focus, input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--shadow-1);
+}
+
 textarea::placeholder, input::placeholder {
-  color: var(--silver-fog);
+  color: var(--ink-faint);
 }
 
 .primary-btn {
-  background: var(--electric-blue);
-  color: var(--white);
+  background: var(--primary);
+  color: var(--on-primary);
   border: none;
-  padding: 4px 20px;
-  min-height: 40px;
-  min-width: 200px;
-  border-radius: 4px;
+  padding: 10px 24px;
+  min-height: 44px;
+  min-width: 180px;
+  border-radius: var(--radius-full);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   font-family: inherit;
-  transition: background-color 0.33s, color 0.33s, border-color 0.33s;
+  transition: background-color 0.2s, transform 0.1s;
 }
 
 .primary-btn:hover {
-  background: var(--electric-blue-hover);
+  background: var(--primary-active);
+}
+
+.primary-btn:active {
+  transform: scale(0.97);
 }
 
 .primary-btn:disabled {
-  background: var(--pale-silver);
+  background: var(--hairline);
+  color: var(--ink-faint);
   cursor: default;
 }
 
 /* ---------- 상태 텍스트 / 빈 상태 ---------- */
-/* DESIGN.md: 이탤릭 등 장식적 표현을 쓰지 않으므로 색상만으로 placeholder를 구분한다. */
 
 .placeholder {
-  color: var(--silver-fog);
+  color: var(--ink-faint);
 }
 
 #analyze-status {
-  color: var(--pewter);
-  font-size: 13px;
+  color: var(--ink-muted);
+  font-size: 14px;
   min-height: 1.2em;
-  margin-top: 12px;
+  margin-top: var(--space-sm);
   word-wrap: break-word;
 }
 
 #analyze-status.error {
-  color: #b3261e;
+  color: var(--accent-orange);
 }
 
-/* ---------- 결과 화면 ---------- */
-/* DESIGN.md 원칙: 카드에 테두리/그림자를 쓰지 않고, 배경 톤 차이와 간격으로만 구분한다. */
+/* ---------- 결과 화면 (feature-card) ---------- */
 
 .result-block {
-  background: var(--light-ash);
-  border: none;
-  border-radius: 0;
-  padding: 20px;
-  margin-bottom: 16px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-md);
 }
 
 .result-block h3 {
-  margin: 0 0 12px;
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--carbon-dark);
+  margin: 0 0 var(--space-sm);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.125px;
+  color: var(--ink);
 }
 
 .result-block p,
 .result-block div,
 .result-block ul {
   margin: 0;
-  color: var(--graphite);
+  color: var(--ink-secondary);
+  font-size: 16px;
   overflow-wrap: break-word;
 }
 
 .keyword-card {
-  background: var(--white);
+  background: transparent;
   border: none;
   border-radius: 0;
-  padding: 12px 0;
-  margin-bottom: 4px;
-  border-bottom: 1px solid var(--cloud-gray);
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--hairline);
 }
 
 .keyword-card:last-child {
   border-bottom: none;
+  padding-bottom: 0;
 }
 
 .keyword-card .term {
-  font-weight: 500;
-  color: var(--carbon-dark);
+  font-weight: 600;
+  color: var(--ink);
 }
 
 .quote {
-  color: var(--pewter);
-  font-size: 12px;
-  margin-top: 6px;
+  color: var(--ink-faint);
+  font-size: 14px;
+  line-height: 1.43;
+  margin-top: var(--space-xxs);
   overflow-wrap: break-word;
 }
 
@@ -239,29 +282,34 @@ textarea::placeholder, input::placeholder {
 }
 
 .insight-item {
-  padding: 12px 0;
-  border-bottom: 1px solid var(--cloud-gray);
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--hairline);
   overflow-wrap: break-word;
 }
 
 .insight-item:last-child {
   border-bottom: none;
+  padding-bottom: 0;
 }
 
-/* DESIGN.md는 의미 기반 색상 코딩(빨강/초록 등)을 쓰지 않으므로,
-   기회/리스크/참고는 색이 아니라 한글 라벨 텍스트로만 구분한다. */
+/* badge-pill: 상태는 Notion의 sticker 팔레트를 텍스트 색으로만 사용 (구조색은 primary 하나) */
 .badge {
   display: inline-block;
   font-size: 12px;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 4px;
-  margin-right: 8px;
-  background: var(--cloud-gray);
-  color: var(--carbon-dark);
+  font-weight: 600;
+  line-height: 1.33;
+  letter-spacing: 0.125px;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  margin-right: var(--space-xs);
+  background: var(--canvas-soft);
 }
 
-/* ---------- 히스토리 화면 ---------- */
+.badge.opportunity { color: var(--accent-green); }
+.badge.risk { color: var(--accent-orange); }
+.badge.neutral { color: var(--ink-muted); }
+
+/* ---------- 히스토리 화면 (list rows) ---------- */
 
 #history-list {
   list-style: none;
@@ -272,17 +320,18 @@ textarea::placeholder, input::placeholder {
 #history-list li {
   background: transparent;
   border: none;
-  border-bottom: 1px solid var(--cloud-gray);
-  padding: 14px 4px;
+  border-bottom: 1px solid var(--hairline);
+  padding: var(--space-sm) var(--space-xs);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background-color 0.33s;
-  color: var(--graphite);
-  font-size: 14px;
+  transition: background-color 0.2s;
+  color: var(--ink-secondary);
+  font-size: 15px;
   overflow-wrap: break-word;
 }
 
 #history-list li:hover {
-  background: var(--light-ash);
+  background: var(--canvas-soft);
 }
 
 #history-list li:last-child {
@@ -291,26 +340,30 @@ textarea::placeholder, input::placeholder {
 
 /* ---------- 반응형 ---------- */
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   .app-header {
-    padding: 10px 16px;
+    padding: var(--space-sm) var(--space-md);
   }
 
   .app-header h1 {
-    font-size: 15px;
+    font-size: 17px;
   }
 
   .nav-btn {
     padding: 4px 10px;
-    font-size: 13px;
+    font-size: 14px;
   }
 
   main {
-    padding: 20px 16px;
+    padding: var(--space-lg) var(--space-md);
   }
 
   .screen > h2 {
-    font-size: 18px;
+    font-size: 19px;
+  }
+
+  .result-block {
+    padding: var(--space-md);
   }
 
   .primary-btn {
