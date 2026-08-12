@@ -1,10 +1,23 @@
 // 화면 뼈대 + localStorage/히스토리 + Claude API 연동 + PDF 업로드(pdf.js CDN).
 // 근거성 검증(태스크 4)은 아직 없음: 지금은 모델 응답이 검증 없이 그대로 표시된다.
+//
+// 주의: 이 파일은 일반 스크립트(type="module" 아님)로 로드된다. file://로 직접 열었을 때
+// 브라우저가 로컬 모듈 스크립트 로딩을 CORS로 차단하기 때문이다. 그래서 pdf.js는 정적 import
+// 대신 동적 import()로, 실제 PDF 업로드 시점에만 원격 CDN에서 불러온다(동적 import는 일반
+// 스크립트에서도 허용됨).
 
-import * as pdfjsLib from "https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build/pdf.min.mjs";
+const PDFJS_BASE = "https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build";
+let pdfjsLibPromise = null;
 
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  "https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build/pdf.worker.min.mjs";
+function loadPdfJsLib() {
+  if (!pdfjsLibPromise) {
+    pdfjsLibPromise = import(`${PDFJS_BASE}/pdf.min.mjs`).then((lib) => {
+      lib.GlobalWorkerOptions.workerSrc = `${PDFJS_BASE}/pdf.worker.min.mjs`;
+      return lib;
+    });
+  }
+  return pdfjsLibPromise;
+}
 
 const HISTORY_KEY = "financial-assistant-history";
 const API_KEY_STORAGE_KEY = "financial-assistant-api-key";
@@ -92,6 +105,7 @@ apiKeyInput.addEventListener("change", () => setApiKey(apiKeyInput.value.trim())
 // ---------- PDF 업로드 (pdf.js) ----------
 
 async function extractPdfText(file) {
+  const pdfjsLib = await loadPdfJsLib();
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const pageTexts = [];
