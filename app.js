@@ -254,14 +254,45 @@ function escapeHtml(str) {
     .replace(/>/g, "&gt;");
 }
 
+// ---------- Supabase에서 기록 불러오기 ----------
+// 로그인이 없어 모든 분석이 공개(anon) 행으로 저장되므로, 이 목록은 기기/브라우저에
+// 상관없이 "지금까지 이 앱에서 분석된 전체 기록"을 보여준다 (개인별 구분 없음).
+
+async function fetchRecentAnalyses() {
+  const { data, error } = await supabaseClient
+    .from("analyses")
+    .select(
+      `id, created_at, source_name, report_title, summary, model, duration_ms,
+       analysis_keywords ( term, plain_explanation, source_quote, position ),
+       analysis_insights ( insight, category, source_quote, position )`
+    )
+    .order("created_at", { ascending: false })
+    .limit(MAX_HISTORY_ENTRIES);
+
+  if (error) throw error;
+
+  return data.map((row) => ({
+    id: row.id,
+    createdAt: new Date(row.created_at).toLocaleString("ko-KR"),
+    sourceName: row.source_name,
+    durationMs: row.duration_ms,
+    result: {
+      report_title: row.report_title,
+      summary_points: row.summary ? row.summary.split("\n") : [],
+      keywords: [...row.analysis_keywords].sort((a, b) => a.position - b.position),
+      insights: [...row.analysis_insights].sort((a, b) => a.position - b.position),
+      model: row.model,
+    },
+  }));
+}
+
 // ---------- 좌우 히스토리 바로가기 카드 ----------
 
 document.querySelectorAll(".history-peek-card").forEach((btn) => {
   btn.addEventListener("click", () => showScreen(btn.dataset.target));
 });
 
-function renderHistoryPeekCards() {
-  const list = loadHistory();
+function renderHistoryPeekCards(list) {
   const dynamicDescEls = document.querySelectorAll(".history-peek-desc[data-dynamic]");
   const text = list.length
     ? `최근 분석: ${list[0].result?.report_title || list[0].sourceName} · ${list[0].createdAt}`
@@ -273,10 +304,17 @@ function renderHistoryPeekCards() {
 
 // ---------- 히스토리 렌더링 ----------
 
-function renderHistory() {
-  renderHistoryPeekCards();
-  const list = loadHistory();
+async function renderHistory() {
   const historyList = document.getElementById("history-list");
+  let list;
+  try {
+    list = await fetchRecentAnalyses();
+  } catch (e) {
+    console.error("Supabase 기록 조회 실패, 이 브라우저의 로컬 기록으로 대체:", e);
+    list = loadHistory();
+  }
+
+  renderHistoryPeekCards(list);
   historyList.classList.remove("placeholder");
   historyList.innerHTML = "";
 
