@@ -1,11 +1,18 @@
+/* DESIGN.md 기준 (Tesla 스타일 디자인 시스템) 적용.
+   Universal Sans는 시스템에 없으므로 DESIGN.md가 명시한 대체 스택(-apple-system, Arial)에
+   한글 표시를 위해 시스템 한글 폰트를 fallback으로 추가했다. */
+
 :root {
-  --navy: #0f2a4a;
-  --accent: #2f6fed;
-  --border: #e2e6ec;
-  --bg: #f7f8fa;
-  --card: #ffffff;
-  --text: #1c2430;
-  --muted: #5b6472;
+  --electric-blue: #3E6AE1;
+  --electric-blue-hover: #3359bf;
+  --white: #FFFFFF;
+  --light-ash: #F4F4F4;
+  --carbon-dark: #171A20;
+  --graphite: #393C41;
+  --pewter: #5C5E62;
+  --silver-fog: #8E8E8E;
+  --cloud-gray: #EEEEEE;
+  --pale-silver: #D0D1D2;
 }
 
 * {
@@ -14,16 +21,22 @@
 
 body {
   margin: 0;
-  font-family: "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.55;
+  font-family: -apple-system, "Malgun Gothic", "Apple SD Gothic Neo", Arial, sans-serif;
+  background: var(--white);
+  color: var(--graphite);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.43;
 }
 
+/* ---------- 상단 내비게이션 ---------- */
+/* Tesla 원본은 히어로 이미지 위에 뜨는 투명 내비게이션이지만, 이 앱은 이미지가 없으므로
+   백색 배경 + 얇은 구분선으로 같은 "구조만 남기고 장식은 없다"는 원칙을 적용했다. */
+
 .app-header {
-  background: var(--navy);
-  color: #fff;
-  padding: 20px 24px;
+  background: var(--white);
+  border-bottom: 1px solid var(--cloud-gray);
+  padding: 12px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -33,7 +46,10 @@ body {
 
 .app-header h1 {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--carbon-dark);
+  letter-spacing: 0.02em;
 }
 
 .screen-nav {
@@ -42,23 +58,34 @@ body {
 }
 
 .nav-btn {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  background: transparent;
+  color: var(--carbon-dark);
   border: none;
-  padding: 8px 16px;
-  border-radius: 20px;
+  padding: 4px 16px;
+  min-height: 32px;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: color 0.33s, background-color 0.33s;
+}
+
+.nav-btn:hover {
+  background: var(--light-ash);
 }
 
 .nav-btn.active {
-  background: var(--accent);
+  background: var(--carbon-dark);
+  color: var(--white);
 }
 
+/* ---------- 레이아웃 ---------- */
+
 main {
-  max-width: 760px;
+  max-width: 720px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 32px 24px;
 }
 
 .screen {
@@ -69,114 +96,225 @@ main {
   display: block;
 }
 
+.screen > h2 {
+  margin: 0 0 24px;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--carbon-dark);
+}
+
+/* ---------- 입력 화면 ---------- */
+
 .field {
-  margin-bottom: 18px;
+  margin-bottom: 20px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .field label {
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-textarea, input[type="file"] {
-  padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-family: inherit;
-  font-size: 0.9rem;
-}
-
-.primary-btn {
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.95rem;
-}
-
-.result-block {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 16px 18px;
-  margin-bottom: 16px;
-}
-
-.result-block h3 {
-  margin-top: 0;
-  font-size: 1rem;
-  color: var(--navy);
-}
-
-.placeholder {
-  color: var(--muted);
-  font-style: italic;
-}
-
-#history-list {
-  list-style: none;
-  padding: 0;
-}
-
-#history-list li {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 14px;
-  margin-bottom: 8px;
-  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--carbon-dark);
 }
 
 .field small {
-  color: var(--muted);
-  font-size: 0.78rem;
+  color: var(--pewter);
+  font-size: 12px;
+}
+
+textarea, input[type="file"], input[type="password"] {
+  padding: 10px 12px;
+  border: 1px solid var(--pale-silver);
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--carbon-dark);
+  background: var(--white);
+  width: 100%;
+  max-width: 100%;
+}
+
+textarea::placeholder, input::placeholder {
+  color: var(--silver-fog);
+}
+
+.primary-btn {
+  background: var(--electric-blue);
+  color: var(--white);
+  border: none;
+  padding: 4px 20px;
+  min-height: 40px;
+  min-width: 200px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: background-color 0.33s, color 0.33s, border-color 0.33s;
+}
+
+.primary-btn:hover {
+  background: var(--electric-blue-hover);
+}
+
+.primary-btn:disabled {
+  background: var(--pale-silver);
+  cursor: default;
+}
+
+/* ---------- 상태 텍스트 / 빈 상태 ---------- */
+/* DESIGN.md: 이탤릭 등 장식적 표현을 쓰지 않으므로 색상만으로 placeholder를 구분한다. */
+
+.placeholder {
+  color: var(--silver-fog);
 }
 
 #analyze-status {
-  color: var(--muted);
-  font-size: 0.85rem;
+  color: var(--pewter);
+  font-size: 13px;
   min-height: 1.2em;
+  margin-top: 12px;
+  word-wrap: break-word;
 }
 
 #analyze-status.error {
   color: #b3261e;
 }
 
+/* ---------- 결과 화면 ---------- */
+/* DESIGN.md 원칙: 카드에 테두리/그림자를 쓰지 않고, 배경 톤 차이와 간격으로만 구분한다. */
+
+.result-block {
+  background: var(--light-ash);
+  border: none;
+  border-radius: 0;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.result-block h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--carbon-dark);
+}
+
+.result-block p,
+.result-block div,
+.result-block ul {
+  margin: 0;
+  color: var(--graphite);
+  overflow-wrap: break-word;
+}
+
 .keyword-card {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 10px;
+  background: var(--white);
+  border: none;
+  border-radius: 0;
+  padding: 12px 0;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--cloud-gray);
+}
+
+.keyword-card:last-child {
+  border-bottom: none;
 }
 
 .keyword-card .term {
-  font-weight: 700;
+  font-weight: 500;
+  color: var(--carbon-dark);
 }
 
-.keyword-card .quote {
-  color: var(--muted);
-  font-size: 0.8rem;
-  margin-top: 4px;
+.quote {
+  color: var(--pewter);
+  font-size: 12px;
+  margin-top: 6px;
+  overflow-wrap: break-word;
+}
+
+#insights-output {
+  list-style: none;
+  padding: 0;
 }
 
 .insight-item {
-  margin-bottom: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--cloud-gray);
+  overflow-wrap: break-word;
 }
 
+.insight-item:last-child {
+  border-bottom: none;
+}
+
+/* DESIGN.md는 의미 기반 색상 코딩(빨강/초록 등)을 쓰지 않으므로,
+   기회/리스크/참고는 색이 아니라 한글 라벨 텍스트로만 구분한다. */
 .badge {
   display: inline-block;
-  font-size: 0.72rem;
+  font-size: 12px;
+  font-weight: 500;
   padding: 2px 8px;
-  border-radius: 12px;
-  margin-right: 6px;
-  color: #fff;
+  border-radius: 4px;
+  margin-right: 8px;
+  background: var(--cloud-gray);
+  color: var(--carbon-dark);
 }
 
-.badge.opportunity { background: #1e7a46; }
-.badge.risk { background: #b3261e; }
-.badge.neutral { background: #5b6472; }
+/* ---------- 히스토리 화면 ---------- */
+
+#history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#history-list li {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--cloud-gray);
+  padding: 14px 4px;
+  cursor: pointer;
+  transition: background-color 0.33s;
+  color: var(--graphite);
+  font-size: 14px;
+  overflow-wrap: break-word;
+}
+
+#history-list li:hover {
+  background: var(--light-ash);
+}
+
+#history-list li:last-child {
+  border-bottom: none;
+}
+
+/* ---------- 반응형 ---------- */
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: 10px 16px;
+  }
+
+  .app-header h1 {
+    font-size: 15px;
+  }
+
+  .nav-btn {
+    padding: 4px 10px;
+    font-size: 13px;
+  }
+
+  main {
+    padding: 20px 16px;
+  }
+
+  .screen > h2 {
+    font-size: 18px;
+  }
+
+  .primary-btn {
+    width: 100%;
+    min-width: 0;
+  }
+}

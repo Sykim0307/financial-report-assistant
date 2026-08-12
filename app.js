@@ -154,14 +154,21 @@ function renderResult(result) {
   result.insights.forEach((ins) => {
     const li = document.createElement("li");
     li.className = "insight-item";
+    const categoryLabel = CATEGORY_LABELS[ins.category] || ins.category;
     li.innerHTML = `
-      <span class="badge ${escapeHtml(ins.category)}">${escapeHtml(ins.category)}</span>
+      <span class="badge ${escapeHtml(ins.category)}">${escapeHtml(categoryLabel)}</span>
       ${escapeHtml(ins.insight)}
       <div class="quote">근거: ${escapeHtml(ins.source_quote)}</div>
     `;
     insightsEl.appendChild(li);
   });
 }
+
+const CATEGORY_LABELS = {
+  opportunity: "기회",
+  risk: "리스크",
+  neutral: "참고",
+};
 
 function escapeHtml(str) {
   return String(str)
