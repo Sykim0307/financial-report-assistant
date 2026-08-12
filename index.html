@@ -14,21 +14,27 @@
     <button type="button" class="nav-btn" data-target="input-screen">입력</button>
     <button type="button" class="nav-btn" data-target="result-screen">결과</button>
     <button type="button" class="nav-btn" data-target="history-screen">히스토리</button>
+    <button type="button" class="nav-btn" data-target="settings-screen">설정</button>
   </nav>
 </header>
 
 <main>
 
+  <section id="settings-screen" class="screen">
+    <h2>설정</h2>
+    <div class="field">
+      <label for="api-key-input">Claude API 키</label>
+      <input type="password" id="api-key-input" placeholder="sk-ant-...">
+      <small>브라우저 localStorage에 평문으로 저장됩니다. 개인/로컬 사용 전용이며, 공개 배포 시 키가 노출될 수 있습니다.</small>
+    </div>
+  </section>
+
   <section id="input-screen" class="screen">
     <h2>리포트 입력</h2>
     <div class="field">
-      <label for="api-key-input">Claude API 키</label>
-      <input type="password" id="api-key-input" placeholder="sk-ant-... (브라우저 localStorage에 저장됩니다)">
-    </div>
-    <div class="field">
-      <label for="file-input">파일 업로드 (PDF) — 아직 미지원</label>
-      <input type="file" id="file-input" accept="application/pdf" disabled>
-      <small>PDF 텍스트 추출은 외부 라이브러리 추가가 필요해 다음 단계에서 결정합니다. 지금은 텍스트 붙여넣기만 지원합니다.</small>
+      <label for="file-input">파일 업로드 (PDF)</label>
+      <input type="file" id="file-input" accept="application/pdf">
+      <small id="file-status"></small>
     </div>
     <div class="field">
       <label for="text-input">텍스트 붙여넣기</label>
@@ -65,6 +71,6 @@
 
 </main>
 
-<script src="app.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>

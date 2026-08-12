@@ -1,10 +1,16 @@
-// 태스크 1(화면 뼈대) + 태스크 2(localStorage/히스토리) + 태스크 3(Claude API 연동, 텍스트 입력만 지원).
+// 화면 뼈대 + localStorage/히스토리 + Claude API 연동 + PDF 업로드(pdf.js CDN).
 // 근거성 검증(태스크 4)은 아직 없음: 지금은 모델 응답이 검증 없이 그대로 표시된다.
+
+import * as pdfjsLib from "https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build/pdf.min.mjs";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build/pdf.worker.min.mjs";
 
 const HISTORY_KEY = "financial-assistant-history";
 const API_KEY_STORAGE_KEY = "financial-assistant-api-key";
 const MAX_HISTORY_ENTRIES = 30;
 const MAX_STORED_INPUT_CHARS = 20000; // localStorage 용량 보호용 (원문 전체가 아니라 앞부분만 저장)
+const MAX_ANALYSIS_CHARS = 40000; // 이 이상은 잘라서 보냄 (비용/응답시간/컨텍스트 한도 보호용)
 
 const CLAUDE_MODEL = "claude-sonnet-5";
 
@@ -82,6 +88,43 @@ navButtons.forEach((btn) => {
 const apiKeyInput = document.getElementById("api-key-input");
 apiKeyInput.value = getApiKey();
 apiKeyInput.addEventListener("change", () => setApiKey(apiKeyInput.value.trim()));
+
+// ---------- PDF 업로드 (pdf.js) ----------
+
+async function extractPdfText(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const pageTexts = [];
+  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+    const page = await pdf.getPage(pageNum);
+    const content = await page.getTextContent();
+    pageTexts.push(content.items.map((item) => item.str).join(" "));
+  }
+  return { text: pageTexts.join("\n\n").trim(), numPages: pdf.numPages };
+}
+
+const fileInput = document.getElementById("file-input");
+const fileStatusEl = document.getElementById("file-status");
+const textInput = document.getElementById("text-input");
+
+fileInput.addEventListener("change", async () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  fileStatusEl.textContent = "PDF에서 텍스트를 추출하는 중입니다...";
+  try {
+    const { text, numPages } = await extractPdfText(file);
+    if (!text) {
+      fileStatusEl.textContent = "텍스트를 추출하지 못했습니다 (스캔본/이미지 PDF일 수 있습니다). 텍스트를 직접 붙여넣어주세요.";
+      return;
+    }
+    textInput.value = text;
+    fileStatusEl.textContent = `추출 완료: ${file.name} (${numPages}페이지, ${text.length.toLocaleString()}자)`;
+  } catch (e) {
+    console.error(e);
+    fileStatusEl.textContent = "PDF 텍스트 추출 실패: " + e.message;
+  }
+});
 
 // ---------- Claude API 호출 ----------
 
@@ -209,20 +252,27 @@ const statusEl = document.getElementById("analyze-status");
 
 analyzeBtn.addEventListener("click", async () => {
   const apiKey = getApiKey();
-  const text = document.getElementById("text-input").value.trim();
+  let text = document.getElementById("text-input").value.trim();
 
   statusEl.classList.remove("error");
 
   if (!apiKey) {
-    statusEl.textContent = "Claude API 키를 먼저 입력해주세요.";
+    statusEl.textContent = "Claude API 키를 먼저 입력해주세요. 설정 화면으로 이동합니다.";
     statusEl.classList.add("error");
+    showScreen("settings-screen");
     apiKeyInput.focus();
     return;
   }
   if (!text) {
-    statusEl.textContent = "분석할 텍스트를 붙여넣어주세요. (PDF 업로드는 아직 미지원)";
+    statusEl.textContent = "분석할 텍스트를 붙여넣거나 PDF를 업로드해주세요.";
     statusEl.classList.add("error");
     return;
+  }
+
+  let truncatedNote = "";
+  if (text.length > MAX_ANALYSIS_CHARS) {
+    text = text.slice(0, MAX_ANALYSIS_CHARS);
+    truncatedNote = ` (문서가 길어 앞 ${MAX_ANALYSIS_CHARS.toLocaleString()}자만 분석했습니다)`;
   }
 
   analyzeBtn.disabled = true;
@@ -235,17 +285,18 @@ analyzeBtn.addEventListener("click", async () => {
 
     renderResult(result);
 
+    const sourceName = fileInput.files[0] ? fileInput.files[0].name : "직접 입력";
     addHistoryEntry({
       id: startedAt,
       createdAt: new Date(startedAt).toLocaleString("ko-KR"),
-      sourceName: "직접 입력",
+      sourceName,
       inputText: text.slice(0, MAX_STORED_INPUT_CHARS),
       result,
       durationMs,
     });
     renderHistory();
 
-    statusEl.textContent = `분석 완료 (${(durationMs / 1000).toFixed(1)}초)`;
+    statusEl.textContent = `분석 완료 (${(durationMs / 1000).toFixed(1)}초)${truncatedNote}`;
     showScreen("result-screen");
   } catch (e) {
     console.error(e);
