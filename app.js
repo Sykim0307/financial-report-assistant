@@ -19,6 +19,12 @@ function loadPdfJsLib() {
   return pdfjsLibPromise;
 }
 
+// Supabase 프로젝트: samsung_ai. anon(publishable) 키는 RLS로 접근이 제한되므로
+// 클라이언트에 노출돼도 안전하다(설계: analyses.user_id가 NULL인 행만 anon이 CRUD 가능).
+const SUPABASE_URL = "https://wdciuciczkhirihersei.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_g_OWgYOEPBNI3UXrG8jBtg_6p6smeuK";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 const HISTORY_KEY = "financial-assistant-history";
 const API_KEY_STORAGE_KEY = "financial-assistant-api-key";
 const MAX_HISTORY_ENTRIES = 30;
@@ -76,6 +82,52 @@ function getApiKey() {
 
 function setApiKey(key) {
   localStorage.setItem(API_KEY_STORAGE_KEY, key);
+}
+
+// ---------- Supabase 저장 ----------
+
+async function saveAnalysisToDb({ sourceName, sourceType, inputText, truncated, result, model, durationMs }) {
+  try {
+    const { data: analysisRow, error: analysisError } = await supabaseClient
+      .from("analyses")
+      .insert({
+        source_name: sourceName,
+        source_type: sourceType,
+        input_text: inputText,
+        input_char_count: inputText.length,
+        truncated,
+        summary: result.summary,
+        model,
+        duration_ms: durationMs,
+      })
+      .select()
+      .single();
+    if (analysisError) throw analysisError;
+
+    const keywordRows = result.keywords.map((kw, i) => ({
+      analysis_id: analysisRow.id,
+      position: i,
+      term: kw.term,
+      plain_explanation: kw.plain_explanation,
+      source_quote: kw.source_quote,
+    }));
+    const insightRows = result.insights.map((ins, i) => ({
+      analysis_id: analysisRow.id,
+      position: i,
+      insight: ins.insight,
+      category: ins.category,
+      source_quote: ins.source_quote,
+    }));
+
+    const [kwResult, insResult] = await Promise.all([
+      keywordRows.length ? supabaseClient.from("analysis_keywords").insert(keywordRows) : Promise.resolve({ error: null }),
+      insightRows.length ? supabaseClient.from("analysis_insights").insert(insightRows) : Promise.resolve({ error: null }),
+    ]);
+    if (kwResult.error) throw kwResult.error;
+    if (insResult.error) throw insResult.error;
+  } catch (e) {
+    console.error("Supabase 저장 실패 (localStorage 히스토리는 정상 저장됨):", e);
+  }
 }
 
 // ---------- 화면 전환 ----------
@@ -300,6 +352,7 @@ analyzeBtn.addEventListener("click", async () => {
     renderResult(result);
 
     const sourceName = fileInput.files[0] ? fileInput.files[0].name : "직접 입력";
+    const sourceType = fileInput.files[0] ? "pdf" : "text";
     addHistoryEntry({
       id: startedAt,
       createdAt: new Date(startedAt).toLocaleString("ko-KR"),
@@ -309,6 +362,16 @@ analyzeBtn.addEventListener("click", async () => {
       durationMs,
     });
     renderHistory();
+
+    await saveAnalysisToDb({
+      sourceName,
+      sourceType,
+      inputText: text,
+      truncated: Boolean(truncatedNote),
+      result,
+      model: CLAUDE_MODEL,
+      durationMs,
+    });
 
     statusEl.textContent = `분석 완료 (${(durationMs / 1000).toFixed(1)}초)${truncatedNote}`;
     showScreen("result-screen");
