@@ -68,7 +68,7 @@ async function saveAnalysisToDb({ sourceName, sourceType, inputText, truncated, 
         input_text: inputText,
         input_char_count: inputText.length,
         truncated,
-        summary: result.summary,
+        summary: result.summary_points.join("\n"),
         model,
         duration_ms: durationMs,
       })
@@ -119,6 +119,8 @@ function showScreen(targetId) {
 navButtons.forEach((btn) => {
   btn.addEventListener("click", () => showScreen(btn.dataset.target));
 });
+
+document.getElementById("logo-link").addEventListener("click", () => showScreen("input-screen"));
 
 // ---------- PDF 업로드 (pdf.js) ----------
 
@@ -173,8 +175,8 @@ async function callClaudeAnalysis(sourceText) {
   if (data?.error) {
     throw new Error(data.error);
   }
-  if (!data?.summary || !Array.isArray(data.keywords) || !Array.isArray(data.insights)) {
-    throw new Error("모델 응답에 summary/keywords/insights가 모두 없습니다.");
+  if (!Array.isArray(data?.summary_points) || data.summary_points.length === 0 || !Array.isArray(data.keywords) || !Array.isArray(data.insights)) {
+    throw new Error("모델 응답에 summary_points/keywords/insights가 모두 없습니다.");
   }
   return data;
 }
@@ -183,8 +185,14 @@ async function callClaudeAnalysis(sourceText) {
 
 function renderResult(result) {
   const summaryEl = document.getElementById("summary-output");
-  summaryEl.textContent = result.summary;
   summaryEl.classList.remove("placeholder");
+  summaryEl.innerHTML = "";
+  result.summary_points.forEach((point) => {
+    const li = document.createElement("li");
+    li.className = "summary-point";
+    li.textContent = point;
+    summaryEl.appendChild(li);
+  });
 
   const keywordsEl = document.getElementById("keywords-output");
   keywordsEl.classList.remove("placeholder");
@@ -229,9 +237,27 @@ function escapeHtml(str) {
     .replace(/>/g, "&gt;");
 }
 
+// ---------- 좌우 히스토리 바로가기 카드 ----------
+
+document.querySelectorAll(".history-peek-card").forEach((btn) => {
+  btn.addEventListener("click", () => showScreen(btn.dataset.target));
+});
+
+function renderHistoryPeekCards() {
+  const list = loadHistory();
+  const dynamicDescEls = document.querySelectorAll(".history-peek-desc[data-dynamic]");
+  const text = list.length
+    ? `최근 분석: ${list[0].sourceName} · ${list[0].createdAt}`
+    : "분석이 끝나면 이 카드에서 최근 결과를 바로 확인할 수 있어요.";
+  dynamicDescEls.forEach((el) => {
+    el.textContent = text;
+  });
+}
+
 // ---------- 히스토리 렌더링 ----------
 
 function renderHistory() {
+  renderHistoryPeekCards();
   const list = loadHistory();
   const historyList = document.getElementById("history-list");
   historyList.classList.remove("placeholder");

@@ -9,7 +9,10 @@
 <body>
 
 <header class="app-header">
-  <h1>FinDecode</h1>
+  <h1 id="logo-link" class="logo" title="입력 화면으로 이동">
+    <img src="findecode-icon.png" alt="" class="logo-icon">
+    FinDecode
+  </h1>
   <nav class="screen-nav">
     <button type="button" class="nav-btn" data-target="about-screen">소개</button>
     <button type="button" class="nav-btn" data-target="input-screen">입력</button>
@@ -17,6 +20,16 @@
     <button type="button" class="nav-btn" data-target="history-screen">히스토리</button>
   </nav>
 </header>
+
+<div class="app-shell">
+
+<aside class="side-rail side-rail-left">
+  <button type="button" class="history-peek-card" data-target="history-screen">
+    <span class="history-peek-icon">🕘</span>
+    <span class="history-peek-title">최근 분석 다시 보기</span>
+    <span class="history-peek-desc" data-dynamic>분석이 끝나면 이 카드에서 최근 결과를 바로 확인할 수 있어요.</span>
+  </button>
+</aside>
 
 <main>
 
@@ -29,20 +42,20 @@
     <article class="result-block">
       <h3>무엇을 얻을 수 있나요?</h3>
       <ul>
-        <li><strong>쉬운 요약</strong> — 원문의 핵심 결론과 수치를 놓치지 않는 평이한 문장 요약</li>
-        <li><strong>키워드 설명</strong> — PER, 콜옵션, 듀레이션 같은 전문용어를 감지해 원문 근거와 함께 쉽게 설명</li>
-        <li><strong>인사이트</strong> — 원문에 근거한 시사점을 기회·리스크·참고로 분류해서 제시</li>
+        <li><strong class="hl">쉬운 요약</strong> — 원문의 핵심 결론과 수치를 놓치지 않는 평이한 문장 요약</li>
+        <li><strong class="hl">키워드 설명</strong> — PER, 콜옵션, 듀레이션 같은 전문용어를 감지해 원문 근거와 함께 쉽게 설명</li>
+        <li><strong class="hl">인사이트</strong> — 원문에 근거한 시사점을 기회·리스크·참고로 분류해서 제시</li>
       </ul>
     </article>
     <article class="result-block">
       <h3>어떻게 만들어져 있나요?</h3>
-      <p>별도 서버 없이 순수 HTML/CSS/JS로 동작하는 정적 웹앱입니다. 분석 요청은 Supabase의 서버리스 함수(Edge Function)를 거쳐 Claude에게 전달되고, 결과는 Supabase 데이터베이스와 이 브라우저의 히스토리에 함께 저장됩니다. Claude API 키는 서버 쪽에만 있고 이 브라우저에는 전혀 내려오지 않습니다.</p>
+      <p>별도 서버 없이 순수 HTML/CSS/JS로 동작하는 정적 웹앱입니다. 분석 요청은 Supabase의 서버리스 함수(Edge Function)를 거쳐 Claude에게 전달되고, 결과는 Supabase 데이터베이스와 이 브라우저의 히스토리에 함께 저장됩니다. Claude API 키는 서버 쪽에만 있고 <strong class="hl">이 브라우저에는 전혀 내려오지 않습니다</strong>.</p>
     </article>
     <article class="result-block">
       <h3>이런 용도로는 사용할 수 없어요</h3>
       <ul>
-        <li>구체적인 매수/매도 종목 추천 등 투자 자문</li>
-        <li>리포트 원문의 사실 검증(팩트체크)</li>
+        <li><strong class="hl">투자 자문</strong> — 구체적인 매수/매도 종목 추천</li>
+        <li><strong class="hl">사실 검증(팩트체크)</strong> — 리포트 원문 내용이 맞는지 확인하는 용도</li>
       </ul>
       <p class="quote">분석 결과는 참고용이며, 투자 판단의 책임은 사용자 본인에게 있습니다.</p>
     </article>
@@ -50,6 +63,7 @@
 
   <section id="input-screen" class="screen">
     <h2>리포트 입력</h2>
+    <p class="screen-desc">증권사 애널리스트 리포트, 펀드 운용보고서, 경제 전망 보고서, 실적 발표 자료 같은 금융 문서에 적합합니다. 텍스트가 선택되는 PDF를 올리거나(스캔본·이미지 PDF는 텍스트 추출이 안 됩니다), 원문을 직접 붙여넣어도 됩니다. 최대 4만자까지 분석돼요.</p>
     <div class="field">
       <label for="file-input">파일 업로드 (PDF)</label>
       <input type="file" id="file-input" accept="application/pdf">
@@ -65,20 +79,24 @@
 
   <section id="result-screen" class="screen">
     <h2>분석 결과</h2>
-    <article class="result-block">
-      <h3>🧾 쉬운 요약</h3>
-      <p id="summary-output" class="placeholder">아직 분석 결과가 없습니다.</p>
-    </article>
-    <article class="result-block">
-      <h3>🔑 키워드 설명</h3>
-      <div id="keywords-output" class="placeholder">아직 분석 결과가 없습니다.</div>
-    </article>
-    <article class="result-block">
-      <h3>💡 인사이트</h3>
-      <ul id="insights-output" class="placeholder">
-        <li>아직 분석 결과가 없습니다.</li>
-      </ul>
-    </article>
+    <div class="result-grid">
+      <article class="result-block">
+        <h3>🧾 쉬운 요약</h3>
+        <ul id="summary-output" class="placeholder">
+          <li>아직 분석 결과가 없습니다.</li>
+        </ul>
+      </article>
+      <article class="result-block">
+        <h3>🔑 키워드 설명</h3>
+        <div id="keywords-output" class="placeholder">아직 분석 결과가 없습니다.</div>
+      </article>
+      <article class="result-block">
+        <h3>💡 인사이트</h3>
+        <ul id="insights-output" class="placeholder">
+          <li>아직 분석 결과가 없습니다.</li>
+        </ul>
+      </article>
+    </div>
   </section>
 
   <section id="history-screen" class="screen">
@@ -89,6 +107,16 @@
   </section>
 
 </main>
+
+<aside class="side-rail side-rail-right">
+  <button type="button" class="history-peek-card" data-target="history-screen">
+    <span class="history-peek-icon">📖</span>
+    <span class="history-peek-title">결과는 이렇게 저장돼요</span>
+    <span class="history-peek-desc">분석 결과는 히스토리 탭에 자동으로 쌓여서 언제든 다시 열어볼 수 있어요.</span>
+  </button>
+</aside>
+
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="app.js"></script>
