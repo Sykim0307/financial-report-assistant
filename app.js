@@ -107,6 +107,7 @@ async function saveAnalysisToDb({ sourceName, sourceType, inputText, truncated, 
 const navButtons = document.querySelectorAll(".nav-btn");
 const screens = document.querySelectorAll(".screen");
 const sideRails = document.querySelectorAll(".side-rail");
+const mainEl = document.querySelector("main");
 
 function showScreen(targetId) {
   screens.forEach((screen) => {
@@ -118,6 +119,7 @@ function showScreen(targetId) {
   sideRails.forEach((rail) => {
     rail.classList.toggle("is-visible", targetId === "input-screen");
   });
+  mainEl.classList.toggle("main--wide", targetId === "result-screen");
 }
 
 navButtons.forEach((btn) => {
