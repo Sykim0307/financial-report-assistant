@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "WebSearch",
-      "PowerShell(python --version; python -c \"import openpyxl; print\\('openpyxl ok'\\)\")"
-    ]
-  }
-}

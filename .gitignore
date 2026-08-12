@@ -18,3 +18,11 @@ backend/*.db
 # os
 .DS_Store
 Thumbs.db
+
+# claude code local runtime state (per-machine, not shared)
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+
+# large external source documents (copyright / repo size)
+한국은행_경제전망보고서_2026년5월.pdf
+한국은행_경제전망보고서_2026년5월_텍스트.txt
