@@ -27,6 +27,55 @@ const SUPABASE_URL = "https://wdciuciczkhirihersei.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_g_OWgYOEPBNI3UXrG8jBtg_6p6smeuK";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// ---------- 인증 (Google 로그인, 선택 사항) ----------
+// 로그인은 필수가 아니다: 로그인하지 않으면 지금처럼 익명(user_id NULL, 전체 공개)으로 계속 쓸 수 있고,
+// 로그인하면 그 사람의 분석만 user_id로 묶여 RLS에 의해 본인에게만 보이게 된다.
+
+let currentUser = null;
+
+const loginBtn = document.getElementById("login-btn");
+const logoutBtn = document.getElementById("logout-btn");
+const userChip = document.getElementById("user-chip");
+const userAvatar = document.getElementById("user-avatar");
+const userName = document.getElementById("user-name");
+
+function updateAuthUI(user) {
+  currentUser = user;
+  if (user) {
+    loginBtn.hidden = true;
+    userChip.hidden = false;
+    userName.textContent = user.user_metadata?.full_name || user.email || "로그인됨";
+    userAvatar.src = user.user_metadata?.avatar_url || "";
+  } else {
+    loginBtn.hidden = false;
+    userChip.hidden = true;
+  }
+}
+
+loginBtn.addEventListener("click", async () => {
+  const { error } = await supabaseClient.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: window.location.href.split("#")[0].split("?")[0] },
+  });
+  if (error) {
+    console.error(error);
+    alert("로그인을 시작하지 못했습니다: " + error.message);
+  }
+});
+
+logoutBtn.addEventListener("click", async () => {
+  await supabaseClient.auth.signOut();
+});
+
+supabaseClient.auth.onAuthStateChange((_event, session) => {
+  updateAuthUI(session?.user || null);
+  renderHistory();
+});
+
+supabaseClient.auth.getSession().then(({ data }) => {
+  updateAuthUI(data.session?.user || null);
+});
+
 const HISTORY_KEY = "financial-assistant-history";
 const MAX_HISTORY_ENTRIES = 30;
 const MAX_STORED_INPUT_CHARS = 20000; // localStorage 용량 보호용 (원문 전체가 아니라 앞부분만 저장)
@@ -63,6 +112,7 @@ async function saveAnalysisToDb({ sourceName, sourceType, inputText, truncated, 
     const { data: analysisRow, error: analysisError } = await supabaseClient
       .from("analyses")
       .insert({
+        user_id: currentUser?.id || null,
         source_name: sourceName,
         source_type: sourceType,
         input_text: inputText,
@@ -165,6 +215,28 @@ fileInput.addEventListener("change", async () => {
     console.error(e);
     fileStatusEl.textContent = "PDF 텍스트 추출 실패: " + e.message;
   }
+});
+
+// ---------- 샘플 리포트 체험 ----------
+// 처음 온 사용자가 자기 문서 없이도 "분석하면 이런 식으로 나오는구나"를 볼 수 있게,
+// 실제 분석과 똑같은 경로(분석 시작 버튼 → Edge Function)를 타는 예시 원문을 채워준다.
+
+const SAMPLE_REPORT_TEXT = `2026년 3분기 A전자 실적 리뷰
+
+A전자의 2026년 3분기 영업이익은 전분기 대비 18% 증가한 1조 2천억원을 기록했다. 메모리 반도체 가격 상승과 AI 서버향 수요 확대가 실적 개선을 이끌었다. 현재 PER은 11배 수준으로 최근 5년 평균(15배)을 크게 하회하고 있어 저평가 논란이 이어지고 있다.
+
+한편 회사는 4분기부터 신규 파운드리 라인 가동을 시작하며, 여기에 투입되는 초기 감가상각비가 매출원가율(마진)에 단기적으로 부담을 줄 수 있다는 우려가 나온다. 환율 변동성 확대에 대비해 통화 콜옵션 헤지 비중도 늘린 상태다.
+
+경쟁사들이 유사 공정에 대규모 설비투자를 발표하면서 중장기적으로는 공급 과잉에 따른 가격 하락 리스크도 함께 거론된다.`;
+
+const sampleBtn = document.getElementById("sample-btn");
+sampleBtn.addEventListener("click", () => {
+  fileInput.value = "";
+  fileStatusEl.textContent = "";
+  textInput.value = SAMPLE_REPORT_TEXT;
+  textInput.focus();
+  statusEl.classList.remove("error");
+  statusEl.textContent = '샘플 리포트를 불러왔습니다. "분석 시작"을 눌러 결과를 확인해보세요.';
 });
 
 // ---------- Claude 분석 (Supabase Edge Function 경유) ----------

@@ -83,6 +83,79 @@ body {
   justify-self: center;
 }
 
+.auth-box {
+  grid-column: 3;
+  justify-self: end;
+  min-width: 0;
+}
+
+.auth-btn {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-strong);
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.auth-btn:hover {
+  background: var(--surface-2);
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  max-width: 220px;
+}
+
+.user-chip[hidden] {
+  display: none;
+}
+
+.user-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--surface-3);
+}
+
+.user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.auth-logout {
+  background: transparent;
+  color: var(--text-faint);
+  border: none;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.auth-logout:hover {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
 .app-header h1 {
   margin: 0;
   font-size: 17px;
@@ -108,7 +181,7 @@ body {
 
 .logo-sub {
   font-weight: 400;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -338,6 +411,25 @@ input[type="file"]::file-selector-button:hover {
 
 .primary-btn:active {
   transform: translateY(1px);
+}
+
+.secondary-btn {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  margin-bottom: var(--space-lg);
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.secondary-btn:hover {
+  background: var(--surface-2);
+  border-color: var(--accent);
 }
 
 .primary-btn:disabled {
@@ -687,6 +779,16 @@ input[type="file"]::file-selector-button:hover {
     text-align: center;
     padding: 7px 4px;
     font-size: 12px;
+  }
+
+  .auth-box {
+    margin-top: var(--space-sm);
+    display: flex;
+    justify-content: center;
+  }
+
+  .user-chip {
+    max-width: none;
   }
 
   main {
