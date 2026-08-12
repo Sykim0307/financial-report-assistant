@@ -129,4 +129,54 @@ textarea, input[type="file"] {
   border-radius: 8px;
   padding: 10px 14px;
   margin-bottom: 8px;
+  cursor: pointer;
 }
+
+.field small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+#analyze-status {
+  color: var(--muted);
+  font-size: 0.85rem;
+  min-height: 1.2em;
+}
+
+#analyze-status.error {
+  color: #b3261e;
+}
+
+.keyword-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.keyword-card .term {
+  font-weight: 700;
+}
+
+.keyword-card .quote {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+.insight-item {
+  margin-bottom: 8px;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-right: 6px;
+  color: #fff;
+}
+
+.badge.opportunity { background: #1e7a46; }
+.badge.risk { background: #b3261e; }
+.badge.neutral { background: #5b6472; }
