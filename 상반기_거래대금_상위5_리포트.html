@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>2026년 상반기 거래대금 상위 5개 지점 리포트</title>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page-plane:     #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --series-1: #2a78d6; /* 강남지점 */
+    --series-2: #eb6834; /* 여의도지점 */
+    --series-3: #1baf7a; /* 판교지점 */
+    --series-4: #eda100; /* 대구지점 */
+    --series-5: #e87ba4; /* 천안지점 */
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page-plane:     #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --series-1: #3987e5;
+      --series-2: #d95926;
+      --series-3: #199e70;
+      --series-4: #c98500;
+      --series-5: #d55181;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --page-plane:     #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255,255,255,0.10);
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page-plane);
+    color: var(--text-primary);
+  }
+  .page { max-width: 900px; margin: 0 auto; padding: 32px 20px 60px; }
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+  }
+  header.card { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  .subtitle { color: var(--text-secondary); font-size: 13px; margin: 0; }
+  .meta { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
+  button.toggle {
+    font-family: inherit; font-size: 12px; padding: 6px 12px;
+    border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface-1); color: var(--text-secondary); cursor: pointer;
+  }
+  button.toggle:hover { color: var(--text-primary); }
+  .toolbar { display: flex; gap: 8px; flex-shrink: 0; }
+
+  .rank-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .rank-item { border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+  .rank-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; border-radius: 50%; font-size: 11px;
+    font-weight: 600; color: #fff; margin-bottom: 8px;
+  }
+  .rank-name { font-size: 13px; font-weight: 600; margin: 0 0 2px; }
+  .rank-value { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; margin: 0; }
+  .rank-unit { font-size: 11px; color: var(--text-muted); }
+
+  h2.section-title { font-size: 14px; margin: 0 0 4px; }
+  .section-sub { font-size: 12px; color: var(--text-secondary); margin: 0 0 16px; }
+
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .gridline { stroke: var(--gridline); stroke-width: 1; }
+  .baseline { stroke: var(--baseline); stroke-width: 1; }
+  .axis-label { fill: var(--text-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .line-mark { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .end-marker { stroke: var(--surface-1); stroke-width: 2; }
+  .leader { stroke: var(--text-muted); stroke-width: 1; stroke-dasharray: 2 2; }
+  .value-label { font-size: 12px; font-weight: 600; fill: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+  .s1-fill { fill: var(--series-1); } .s1-stroke { stroke: var(--series-1); } .bg-s1 { background: var(--series-1); }
+  .s2-fill { fill: var(--series-2); } .s2-stroke { stroke: var(--series-2); } .bg-s2 { background: var(--series-2); }
+  .s3-fill { fill: var(--series-3); } .s3-stroke { stroke: var(--series-3); } .bg-s3 { background: var(--series-3); }
+  .s4-fill { fill: var(--series-4); } .s4-stroke { stroke: var(--series-4); } .bg-s4 { background: var(--series-4); }
+  .s5-fill { fill: var(--series-5); } .s5-stroke { stroke: var(--series-5); } .bg-s5 { background: var(--series-5); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--gridline); }
+  .legend-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-secondary); }
+  .legend-key { width: 14px; height: 2px; border-radius: 1px; flex-shrink: 0; }
+  .legend-name { color: var(--text-primary); font-weight: 500; }
+  .legend-total { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+  .chart-wrap { position: relative; }
+  .hit-layer { fill: transparent; cursor: crosshair; }
+  .crosshair { stroke: var(--baseline); stroke-width: 1; pointer-events: none; opacity: 0; }
+  .hover-dot { pointer-events: none; opacity: 0; }
+  .tooltip {
+    position: absolute; pointer-events: none; opacity: 0; transition: opacity 0.08s;
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; font-size: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    min-width: 150px; z-index: 5;
+  }
+  .tooltip-month { color: var(--text-muted); font-size: 11px; margin-bottom: 6px; }
+  .tooltip-row { display: flex; align-items: center; gap: 6px; justify-content: space-between; padding: 2px 0; }
+  .tooltip-key { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); }
+  .tooltip-stroke { width: 10px; height: 2px; border-radius: 1px; flex-shrink: 0; }
+  .tooltip-value { font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+  table.data-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  table.data-table th, table.data-table td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--gridline); font-variant-numeric: tabular-nums; }
+  table.data-table th:first-child, table.data-table td:first-child { text-align: left; font-variant-numeric: initial; }
+  table.data-table th { color: var(--text-muted); font-weight: 500; font-size: 11px; }
+  table.data-table td.name-cell { display: flex; align-items: center; gap: 7px; font-weight: 500; color: var(--text-primary); }
+  table.data-table tfoot td { font-weight: 600; color: var(--text-primary); border-bottom: none; border-top: 1px solid var(--baseline); }
+  .table-swatch { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .hidden { display: none; }
+
+  footer.note { font-size: 11px; color: var(--text-muted); line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="viz-root page">
+
+  <header class="card">
+    <div>
+      <h1>2026년 상반기 거래대금 상위 5개 지점</h1>
+      <p class="subtitle">전체 21개 지점 중 2026년 1~6월 거래대금 합계 기준 상위 5개 지점의 월별 추이</p>
+      <p class="meta">데이터: 지점별_실적_더미데이터_정리본.xlsx · 작성 기준일 2026-08-12</p>
+    </div>
+    <div class="toolbar">
+      <button class="toggle" id="theme-toggle">다크 모드</button>
+      <button class="toggle" id="table-toggle">표로 보기</button>
+    </div>
+  </header>
+
+  <section class="card">
+    <h2 class="section-title">상반기 거래대금 합계 순위</h2>
+    <p class="section-sub">2026년 1~6월 거래대금(억원) 합계 기준</p>
+    <div class="rank-grid" id="rank-grid"></div>
+  </section>
+
+  <section class="card">
+    <h2 class="section-title">월별 거래대금 추이</h2>
+    <p class="section-sub">단위: 억원 · 포인터를 그래프 위에 올리면 월별 상세 값을 볼 수 있습니다</p>
+    <div class="chart-wrap" id="chart-wrap">
+      <svg id="chart" viewBox="0 0 820 420" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="tooltip" id="tooltip"></div>
+    </div>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <section class="card hidden" id="table-section">
+    <h2 class="section-title">월별 원자료</h2>
+    <p class="section-sub">단위: 억원</p>
+    <table class="data-table" id="data-table"></table>
+  </section>
+
+  <footer class="note card">
+    참고: 판교지점 2026-04 거래대금은 정리 과정에서 텍스트로 저장돼 있던 "1,199.7"을 숫자 1199.7로 변환한 값입니다(추정치 아님, 형식만 수정). 그 외 상위 5개 지점의 거래대금 수치는 원자료 값 그대로이며 추정치가 포함되지 않았습니다.
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var months = ["1월","2월","3월","4월","5월","6월"];
+  var series = [
+    { key:"s1", name:"강남지점",  values:[1256.1,1367.3,1443.4,1458.7,1574.7,1540.1], total:8640.3 },
+    { key:"s2", name:"여의도지점", values:[1170.3,1067.7,1298.1,1333.7,1495.8,1479.8], total:7845.4 },
+    { key:"s3", name:"판교지점",  values:[812.8,856.7,1107.2,1199.7,1250.9,1245.7],  total:6473.0 },
+    { key:"s4", name:"대구지점",  values:[814.8,812.6,915.7,1076.6,1076.3,1251.4],   total:5947.4 },
+    { key:"s5", name:"천안지점",  values:[812.2,933,892.9,907.2,999.7,1053.9],       total:5598.9 }
+  ];
+
+  // ---------- 순위 카드 ----------
+  var rankGrid = document.getElementById("rank-grid");
+  series.forEach(function (s, i) {
+    var item = document.createElement("div");
+    item.className = "rank-item";
+    var badge = document.createElement("div");
+    badge.className = "rank-badge bg-" + s.key;
+    badge.textContent = String(i + 1);
+    var name = document.createElement("p");
+    name.className = "rank-name";
+    name.textContent = s.name;
+    var val = document.createElement("p");
+    val.className = "rank-value";
+    val.textContent = s.total.toLocaleString("ko-KR", {minimumFractionDigits:1, maximumFractionDigits:1});
+    var unit = document.createElement("span");
+    unit.className = "rank-unit";
+    unit.textContent = " 억원";
+    val.appendChild(unit);
+    item.appendChild(badge); item.appendChild(name); item.appendChild(val);
+    rankGrid.appendChild(item);
+  });
+
+  // ---------- 차트 좌표 ----------
+  var W = 820, H = 420, ML = 60, MR = 150, MT = 24, MB = 40;
+  var plotW = W - ML - MR, plotH = H - MT - MB;
+  var yMax = 1600, yTicks = [0, 400, 800, 1200, 1600];
+  function xPos(i) { return ML + (i / (months.length - 1)) * plotW; }
+  function yPos(v) { return MT + plotH - (v / yMax) * plotH; }
+
+  var svg = document.getElementById("chart");
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  // 그리드라인 + y축 라벨
+  yTicks.forEach(function (t) {
+    var y = yPos(t);
+    svg.appendChild(el("line", { x1: ML, x2: ML + plotW, y1: y, y2: y, class: "gridline" }));
+    var label = el("text", { x: ML - 10, y: y + 4, class: "axis-label", "text-anchor": "end" });
+    label.textContent = t.toLocaleString("ko-KR");
+    svg.appendChild(label);
+  });
+  svg.appendChild(el("line", { x1: ML, x2: ML, y1: MT, y2: MT + plotH, class: "baseline" }));
+  svg.appendChild(el("line", { x1: ML, x2: ML + plotW, y1: MT + plotH, y2: MT + plotH, class: "baseline" }));
+
+  // x축 라벨
+  months.forEach(function (m, i) {
+    var label = el("text", { x: xPos(i), y: MT + plotH + 22, class: "axis-label", "text-anchor": "middle" });
+    label.textContent = "2026-" + String(i + 1).padStart(2, "0");
+    svg.appendChild(label);
+  });
+
+  // 선 + 데이터 포인트
+  series.forEach(function (s) {
+    var d = s.values.map(function (v, i) { return (i === 0 ? "M" : "L") + xPos(i) + "," + yPos(v); }).join(" ");
+    svg.appendChild(el("path", { d: d, class: "line-mark " + s.key + "-stroke" }));
+    s.values.forEach(function (v, i) {
+      svg.appendChild(el("circle", { cx: xPos(i), cy: yPos(v), r: i === s.values.length - 1 ? 4 : 3, class: s.key + "-fill end-marker" }));
+    });
+  });
+
+  // 끝점 라벨(값) - 충돌 방지: 최소 16px 간격 확보 후 필요한 경우 리더선
+  var endX = xPos(months.length - 1);
+  var ends = series.map(function (s) {
+    var v = s.values[s.values.length - 1];
+    return { key: s.key, v: v, y: yPos(v) };
+  }).sort(function (a, b) { return a.y - b.y; });
+
+  var minGap = 16;
+  for (var i = 1; i < ends.length; i++) {
+    if (ends[i].y - ends[i - 1].y < minGap) ends[i].y = ends[i - 1].y + minGap;
+  }
+
+  ends.forEach(function (e) {
+    var actualY = yPos(e.v);
+    if (Math.abs(e.y - actualY) > 4) {
+      svg.appendChild(el("line", { x1: endX + 6, x2: endX + 18, y1: actualY, y2: e.y, class: "leader" }));
+    }
+    var t = el("text", { x: endX + 20, y: e.y + 4, class: "value-label" });
+    t.textContent = e.v.toLocaleString("ko-KR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    svg.appendChild(t);
+  });
+
+  // ---------- 호버 크로스헤어 + 툴팁 ----------
+  var crosshair = el("line", { class: "crosshair", y1: MT, y2: MT + plotH });
+  svg.appendChild(crosshair);
+  var hoverDots = series.map(function (s) {
+    var c = el("circle", { r: 5, class: "hover-dot " + s.key + "-fill end-marker" });
+    svg.appendChild(c);
+    return c;
+  });
+  var hit = el("rect", { x: ML, y: MT, width: plotW, height: plotH, class: "hit-layer" });
+  svg.appendChild(hit);
+
+  var tooltip = document.getElementById("tooltip");
+  var wrap = document.getElementById("chart-wrap");
+
+  function showAt(i, clientX, clientY) {
+    var x = xPos(i);
+    crosshair.setAttribute("x1", x); crosshair.setAttribute("x2", x);
+    crosshair.style.opacity = 1;
+    hoverDots.forEach(function (dot, idx) {
+      dot.setAttribute("cx", x);
+      dot.setAttribute("cy", yPos(series[idx].values[i]));
+      dot.style.opacity = 1;
+    });
+
+    tooltip.innerHTML = "";
+    var monthLabel = document.createElement("div");
+    monthLabel.className = "tooltip-month";
+    monthLabel.textContent = "2026-" + String(i + 1).padStart(2, "0");
+    tooltip.appendChild(monthLabel);
+
+    series.slice().sort(function (a, b) { return b.values[i] - a.values[i]; }).forEach(function (s) {
+      var row = document.createElement("div");
+      row.className = "tooltip-row";
+      var keyWrap = document.createElement("div");
+      keyWrap.className = "tooltip-key";
+      var stroke = document.createElement("span");
+      stroke.className = "tooltip-stroke bg-" + s.key;
+      var nameSpan = document.createElement("span");
+      nameSpan.textContent = s.name;
+      keyWrap.appendChild(stroke); keyWrap.appendChild(nameSpan);
+      var valSpan = document.createElement("span");
+      valSpan.className = "tooltip-value";
+      valSpan.textContent = s.values[i].toLocaleString("ko-KR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+      row.appendChild(keyWrap); row.appendChild(valSpan);
+      tooltip.appendChild(row);
+    });
+
+    var wrapRect = wrap.getBoundingClientRect();
+    var left = clientX - wrapRect.left + 14;
+    var top = clientY - wrapRect.top - 20;
+    if (left + 170 > wrapRect.width) left = clientX - wrapRect.left - 184;
+    tooltip.style.left = left + "px";
+    tooltip.style.top = top + "px";
+    tooltip.style.opacity = 1;
+  }
+
+  function hideTooltip() {
+    crosshair.style.opacity = 0;
+    hoverDots.forEach(function (d) { d.style.opacity = 0; });
+    tooltip.style.opacity = 0;
+  }
+
+  function handleMove(evt) {
+    var svgRect = svg.getBoundingClientRect();
+    var scale = W / svgRect.width;
+    var localX = (evt.clientX - svgRect.left) * scale;
+    var i = Math.round(((localX - ML) / plotW) * (months.length - 1));
+    i = Math.max(0, Math.min(months.length - 1, i));
+    showAt(i, evt.clientX, evt.clientY);
+  }
+
+  hit.addEventListener("pointermove", handleMove);
+  hit.addEventListener("pointerleave", hideTooltip);
+
+  // ---------- 범례 ----------
+  var legend = document.getElementById("legend");
+  series.forEach(function (s) {
+    var item = document.createElement("div");
+    item.className = "legend-item";
+    var key = document.createElement("span");
+    key.className = "legend-key bg-" + s.key;
+    var name = document.createElement("span");
+    name.className = "legend-name";
+    name.textContent = s.name;
+    var total = document.createElement("span");
+    total.className = "legend-total";
+    total.textContent = "총 " + s.total.toLocaleString("ko-KR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + "억원";
+    item.appendChild(key); item.appendChild(name); item.appendChild(total);
+    legend.appendChild(item);
+  });
+
+  // ---------- 표 뷰 ----------
+  var table = document.getElementById("data-table");
+  var thead = document.createElement("thead");
+  var headRow = document.createElement("tr");
+  ["지점명"].concat(months.map(function (m, i) { return "2026-" + String(i + 1).padStart(2, "0"); })).concat(["상반기 합계"]).forEach(function (h) {
+    var th = document.createElement("th");
+    th.textContent = h;
+    headRow.appendChild(th);
+  });
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  var tbody = document.createElement("tbody");
+  series.forEach(function (s) {
+    var tr = document.createElement("tr");
+    var nameTd = document.createElement("td");
+    nameTd.className = "name-cell";
+    var sw = document.createElement("span");
+    sw.className = "table-swatch bg-" + s.key;
+    var nameSpan = document.createElement("span");
+    nameSpan.textContent = s.name;
+    nameTd.appendChild(sw); nameTd.appendChild(nameSpan);
+    tr.appendChild(nameTd);
+    s.values.forEach(function (v) {
+      var td = document.createElement("td");
+      td.textContent = v.toLocaleString("ko-KR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+      tr.appendChild(td);
+    });
+    var totalTd = document.createElement("td");
+    totalTd.textContent = s.total.toLocaleString("ko-KR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    tr.appendChild(totalTd);
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+
+  // ---------- 토글 버튼 ----------
+  document.getElementById("table-toggle").addEventListener("click", function () {
+    var section = document.getElementById("table-section");
+    var isHidden = section.classList.contains("hidden");
+    section.classList.toggle("hidden");
+    this.textContent = isHidden ? "차트로 보기" : "표로 보기";
+  });
+
+  document.getElementById("theme-toggle").addEventListener("click", function () {
+    var root = document.documentElement;
+    var current = root.getAttribute("data-theme");
+    var next = current === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    this.textContent = next === "dark" ? "라이트 모드" : "다크 모드";
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# secrets
+.env
+
+# python
+__pycache__/
+*.pyc
+.venv/
+backend/.venv/
+
+# node
+node_modules/
+frontend/dist/
+
+# sqlite data
+*.db
+backend/*.db
+
+# os
+.DS_Store
+Thumbs.db

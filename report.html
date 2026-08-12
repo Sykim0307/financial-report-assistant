@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>경쟁사 분석: 미래에셋증권 vs 삼성증권</title>
+<style>
+  :root{
+    --navy:#0f2a4a;
+    --navy-2:#1a3d66;
+    --accent:#2f6fed;
+    --confirmed-bg:#e8f3ec;
+    --confirmed-fg:#1e7a46;
+    --unknown-bg:#f2f2f2;
+    --unknown-fg:#7a7a7a;
+    --border:#e2e6ec;
+    --bg:#f7f8fa;
+    --card:#ffffff;
+    --text:#1c2430;
+    --muted:#5b6472;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.55;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:32px 24px 64px;}
+  header{
+    background:linear-gradient(135deg,var(--navy),var(--navy-2));
+    color:#fff;
+    padding:36px 24px;
+    border-radius:14px;
+    margin-bottom:28px;
+  }
+  header h1{margin:0 0 8px;font-size:1.6rem;}
+  header p{margin:0;color:#cfe0ff;font-size:0.92rem;}
+  .meta-row{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;font-size:0.82rem;color:#dbe7ff;}
+  .meta-row span{background:rgba(255,255,255,0.12);padding:4px 10px;border-radius:20px;}
+
+  section{margin-bottom:32px;}
+  h2{font-size:1.15rem;border-left:4px solid var(--accent);padding-left:10px;margin-bottom:14px;}
+  .conclusion-box{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:20px 22px;
+    box-shadow:0 1px 3px rgba(20,30,50,0.05);
+  }
+  .conclusion-box p{margin:0 0 10px;font-size:0.98rem;}
+  .conclusion-box p:last-child{margin-bottom:0;}
+
+  .insight-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .insight-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:18px;
+    font-size:0.87rem;
+    position:relative;
+  }
+  .insight-card .num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:24px;height:24px;border-radius:50%;
+    background:var(--accent);color:#fff;font-weight:700;font-size:0.8rem;
+    margin-bottom:10px;
+  }
+
+  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(20,30,50,0.05);}
+  thead th{
+    background:var(--navy);
+    color:#fff;
+    text-align:left;
+    padding:12px 14px;
+    font-size:0.85rem;
+    font-weight:600;
+  }
+  tbody td{
+    padding:12px 14px;
+    border-bottom:1px solid var(--border);
+    font-size:0.85rem;
+    vertical-align:top;
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:#fafbfc;}
+  td.category{font-weight:600;color:var(--navy-2);white-space:nowrap;}
+  .val-unknown{color:var(--unknown-fg);font-style:italic;background:var(--unknown-bg);padding:2px 8px;border-radius:6px;display:inline-block;}
+  .src{display:block;margin-top:6px;font-size:0.76rem;}
+  .src a{color:var(--accent);text-decoration:none;word-break:break-all;}
+  .src a:hover{text-decoration:underline;}
+
+  .caveat{
+    margin-top:14px;
+    background:#fff8e6;
+    border:1px solid #f0dca0;
+    border-radius:10px;
+    padding:12px 16px;
+    font-size:0.82rem;
+    color:#6b5a1f;
+  }
+
+  .methodology{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:18px 20px;
+    font-size:0.83rem;
+    color:var(--muted);
+  }
+  .methodology ul{margin:8px 0 0;padding-left:20px;}
+  .methodology li{margin-bottom:6px;}
+
+  footer{text-align:center;font-size:0.75rem;color:var(--muted);margin-top:36px;}
+
+  @media (max-width:720px){
+    .insight-grid{grid-template-columns:1fr;}
+    table, thead, tbody, th, td, tr{display:block;}
+    thead{display:none;}
+    tbody tr{margin-bottom:14px;border:1px solid var(--border);border-radius:10px;padding:8px 0;}
+    td.category{border-bottom:1px dashed var(--border);margin-bottom:6px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>경쟁사 분석: 미래에셋증권 vs 삼성증권</h1>
+    <p>공개 정보(보도자료·앱스토어·공식 홈페이지) 기반 조사 · 서브에이전트 병렬조사 + 독립 교차검증</p>
+    <div class="meta-row">
+      <span>작성일 2026-08-12</span>
+      <span>조사 대상 2곳</span>
+      <span>비교 항목 8개</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>결론 (핵심 시사점 3가지)</h2>
+    <div class="insight-grid">
+      <div class="insight-card">
+        <div class="num">1</div>
+        <p>미래에셋증권 자기자본(연결기준, 2026년 1분기) 약 141,000억원은 삼성증권 연결기준 자기자본 86,560억원(2026년 2분기 말)보다 약 1.63배 크다(141,000÷86,560≈1.63). 다만 기준 시점·연결/별도 기준이 달라 참고용 비교임 (하단 주의사항 참조).</p>
+      </div>
+      <div class="insight-card">
+        <div class="num">2</div>
+        <p>Apple App Store 기준 미래에셋 M-STOCK 앱 평점은 3.9점(리뷰 약 7,100개)으로 삼성증권 mPOP 앱 2.1점(평가 약 5,500개)보다 1.8점 높아, 모바일 트레이딩 앱 사용자 만족도에서 뚜렷한 격차가 확인된다.</p>
+      </div>
+      <div class="insight-card">
+        <div class="num">3</div>
+        <p>삼성증권은 공식 이벤트 페이지에 국내주식(92일 0.0036396%→이후 0.015%)·해외 미국주식(3개월 0%→9개월 0.03%→이후 0.07%) 수수료를 구체적 수치로 공개한 반면, 미래에셋증권은 수수료 안내 페이지 존재만 확인되고 구체 수치는 확인되지 않아, 수수료 프로모션 공개의 구체성 면에서 삼성증권이 더 투명하다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>비교표 (근거 · 출처 포함)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:18%">항목</th>
+          <th style="width:41%">미래에셋증권</th>
+          <th style="width:41%">삼성증권</th>
+        </tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+    <div class="caveat">
+      ⚠ <strong>자기자본 비교 주의</strong>: 미래에셋증권 수치는 <em>연결기준(2026년 1분기)</em>, 삼성증권 수치는 <em>별도기준 8조원 돌파 + 연결기준 8조6,560억원(2026년 2분기 말)</em>이 함께 보도되어 있어 기준 시점과 연결/별도 기준이 서로 다르다. 직접적인 우열 비교보다는 규모감 참고용으로 활용할 것.
+    </div>
+  </section>
+
+  <section>
+    <h2>조사 방법론 및 제약사항</h2>
+    <div class="methodology">
+      <p>이 리포트는 다음 절차로 작성되었다.</p>
+      <ul>
+        <li>회사별 서브에이전트가 <strong>공개 출처만</strong> 사용해 병렬 조사 (① 공식 보도자료/뉴스룸 ② 앱스토어 등록정보 ③ 공식 홈페이지 상품/수수료 안내)</li>
+        <li>별도의 독립 서브에이전트가 각 항목을 원 출처 재열람 또는 다른 공개 출처로 <strong>교차검증</strong> (CONFIRMED / CONTRADICTED / 미확인 판정)</li>
+        <li>1차 조사에서 사실과 다르게 서술된 항목(예: "업무협약 체결"로 잘못 기재됐던 미래에셋·코빗 관련 보도, 삼성증권 협의수수료 온라인 구간 수치 오류)은 교차검증에서 CONTRADICTED로 판정되어 비교표에서 제외됨</li>
+        <li>확인 불가 항목(예: 양사 Google Play 평점 — 동적 렌더링으로 자동 조회 실패)은 값을 지어내지 않고 <span class="val-unknown">미확인</span>으로 표기</li>
+        <li>1차 조사에서 미래에셋증권 항목이 비어 있었던 오류를 발견해 재조사를 거쳤음 (검증 이력은 별도 로그에 기록)</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>본 리포트는 공개된 웹 자료(보도자료·앱스토어·공식 홈페이지)만을 근거로 작성되었으며, 각 셀의 출처 링크로 원문을 직접 확인할 수 있다.</footer>
+</div>
+
+<script>
+const rows = [
+  {category:"자기자본/재무규모",
+   a:{value:"자기자본(연결기준, 2026년 1분기) 약 141,000억원(14.1조원), 연환산 연결 ROE 약 29%", source:"https://www.fntimes.com/html/view.php?ud=202605121053097791179ad43907_18"},
+   b:{value:"자기자본(별도기준) 80,000억원(8조원) 최초 돌파, 연결기준 2026년 2분기 말 86,560억원(8조6,560억원)", source:"https://www.news2day.co.kr/article/20260805500314"}},
+  {category:"MTS 앱 평점 (App Store)",
+   a:{value:"M-STOCK 앱 평점 3.9점(5점 만점), 리뷰 약 7,100개, 금융 카테고리 무료앱 29위", source:"https://apps.apple.com/kr/app/%EB%AF%B8%EB%9E%98%EC%97%90%EC%85%8B%EC%A6%9D%EA%B6%8C-m-stock/id1248716281"},
+   b:{value:"mPOP 앱 평점 2.1점(5점 만점), 평가 수 약 5,500개", source:"https://apps.apple.com/kr/app/%EC%82%BC%EC%84%B1%EC%A6%9D%EA%B6%8C-mpop/id1150231646"}},
+  {category:"MTS 앱 평점 (Google Play)",
+   a:{value:"미확인", source:""},
+   b:{value:"미확인", source:""}},
+  {category:"최근 보도자료 / 신규 서비스·전략",
+   a:{value:"2026.7.23 'Digital X: 미래에셋3.0 실행전략' — 박현주 GSO, 코빗 기반 Digital X를 미래에셋3.0 핵심축으로 제시", source:"https://www.miraeasset.com/pr/news_list.do"},
+   b:{value:"2026.5.12 IBKR과 협력해 외국인통합계좌(Omnibus Account) 서비스 출시 (2023년 협력논의 시작, 2025.9 혁신금융서비스 지정)", source:"https://www.etnews.com/20260512000103"}},
+  {category:"최근 보도자료 (M&A·제휴 세부 사실관계)",
+   a:{value:"미확인", source:""},
+   b:{value:"미확인", source:""}},
+  {category:"수수료 정책 (표준/일반 매매수수료)",
+   a:{value:"국내/해외주식·파생상품별 매매수수료 안내 페이지 운영 확인 (구체 수치는 확인 불가)", source:"https://securities.miraeasset.com/hki/hki3099/n06.do"},
+   b:{value:"미확인", source:""}},
+  {category:"수수료 정책 (프로모션 - 국내주식)",
+   a:{value:"미확인", source:""},
+   b:{value:"2026.4.1~6.30 신청 고객 대상 92일간 온라인 0.0036396%(ETF/ETN 0.0042087%), 이후 0.015% 적용", source:"https://www.samsungpop.com/ux/kor/customer/guide/eventguide/eventViewContent.do?menuNo=01010900&MenuSeqNo=3724"}},
+  {category:"수수료 정책 (프로모션 - 해외주식)",
+   a:{value:"미확인", source:""},
+   b:{value:"2025.10.1~12.31 신청 시 2년간 미국주식 0%(3개월)→0.03%(9개월)→0.07%, 중국/홍콩/일본/유럽 0.09%~, 환율우대 달러95%/유로·엔·파운드85%/위안·홍콩달러75%", source:"https://www.samsungpop.com/ux/kor/customer/guide/eventguide/eventViewContent.do?menuNo=01010900&MenuSeqNo=3355"}},
+  {category:"차별화 서비스/전략",
+   a:{value:"M-STOCK 앱: 국내·해외주식/국내외 선물옵션 통합 트레이딩, 미국·중국(상해A/심천A)·홍콩·일본·베트남 거래 지원, 라이트/다크모드 자동전환", source:"https://apps.apple.com/kr/app/%EB%AF%B8%EB%9E%98%EC%97%90%EC%85%8B%EC%A6%9D%EA%B6%8C-m-stock/id1248716281"},
+   b:{value:"브랜드 미션: '금융 전문성을 활용해 고객과 주주의 성장에 기여하고 사회적 책임을 다한다', 4대 핵심가치(시장선도/도전추구/고객중심/신뢰구축)", source:"https://www.samsungsecurities.co.kr/kor/company/brand.do"}}
+];
+
+function escapeHtml(str){
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function cell(entry){
+  if(entry.value === "미확인"){
+    return '<span class="val-unknown">미확인</span>';
+  }
+  const safeUrl = escapeHtml(entry.source);
+  const src = entry.source
+    ? `<span class="src">출처: <a href="${safeUrl}" target="_blank" rel="noopener">${safeUrl}</a></span>`
+    : "";
+  return `${escapeHtml(entry.value)}${src}`;
+}
+
+const tbody = document.getElementById("table-body");
+tbody.innerHTML = rows.map(r => `
+  <tr>
+    <td class="category">${r.category}</td>
+    <td>${cell(r.a)}</td>
+    <td>${cell(r.b)}</td>
+  </tr>
+`).join("");
+</script>
+</body>
+</html>
