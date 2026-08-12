@@ -3,8 +3,8 @@
 - 프론트엔드는 순수 HTML/CSS/JS로 구현한다 (프레임워크·빌드 도구 없음).
 - 파일은 `index.html`, `style.css`, `app.js` 3개로 유지한다.
 - 분석 데이터(분석 결과·키워드·인사이트)는 Supabase DB에 저장한다 (프로젝트: `samsung_ai`, id `wdciuciczkhirihersei`, 테이블: `analyses`/`analysis_keywords`/`analysis_insights`). 커스텀 백엔드 서버(Node/FastAPI 등)는 두지 않으며, 서버 로직이 필요하면 Supabase Edge Function으로 처리한다.
-- 브라우저 `localStorage`는 기기 로컬 상태(분석 히스토리 캐시, API 키 등)에 한해 계속 사용한다.
-- Claude API 키를 브라우저 `localStorage`에 평문 저장하는 현재 방식은 배포 전 반드시 재검토한다 (예: Supabase Edge Function 뒤로 숨기기). 해결 전까지는 개인/로컬 사용 전용으로 간주한다.
+- 브라우저 `localStorage`는 기기 로컬 상태(분석 히스토리 캐시 등)에 한해 계속 사용한다.
+- Anthropic API 키는 브라우저에 절대 두지 않는다. Claude 호출은 Supabase Edge Function(`analyze-report`)을 통해서만 하고, 키는 그 함수의 서버 측 시크릿(`ANTHROPIC_API_KEY`)으로만 보관한다.
 
 # 작업 규칙
 

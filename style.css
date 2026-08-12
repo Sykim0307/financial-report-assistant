@@ -160,7 +160,7 @@ main {
   line-height: 1.45;
 }
 
-textarea, input[type="file"], input[type="password"] {
+textarea, input[type="file"] {
   padding: 10px 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);

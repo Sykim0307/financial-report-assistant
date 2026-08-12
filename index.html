@@ -3,31 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>금융 리포트 이해 보조 어시스턴트</title>
+<title>FinDecode — 금융 리포트를 쉬운 말로</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <header class="app-header">
-  <h1>금융 리포트 이해 보조 어시스턴트</h1>
+  <h1>FinDecode</h1>
   <nav class="screen-nav">
     <button type="button" class="nav-btn" data-target="input-screen">입력</button>
     <button type="button" class="nav-btn" data-target="result-screen">결과</button>
     <button type="button" class="nav-btn" data-target="history-screen">히스토리</button>
-    <button type="button" class="nav-btn" data-target="settings-screen">설정</button>
   </nav>
 </header>
 
 <main>
-
-  <section id="settings-screen" class="screen">
-    <h2>설정</h2>
-    <div class="field">
-      <label for="api-key-input">Claude API 키</label>
-      <input type="password" id="api-key-input" placeholder="sk-ant-...">
-      <small>브라우저 localStorage에 평문으로 저장됩니다. 개인/로컬 사용 전용이며, 공개 배포 시 키가 노출될 수 있습니다.</small>
-    </div>
-  </section>
 
   <section id="input-screen" class="screen">
     <h2>리포트 입력</h2>

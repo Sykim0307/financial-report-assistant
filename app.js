@@ -1,4 +1,6 @@
-// 화면 뼈대 + localStorage/히스토리 + Claude API 연동 + PDF 업로드(pdf.js CDN).
+// 화면 뼈대 + localStorage/히스토리 + Supabase 저장 + PDF 업로드(pdf.js CDN).
+// Claude 분석은 Supabase Edge Function(analyze-report)을 거쳐 호출한다 — Anthropic API 키는
+// 그 함수의 서버 측 시크릿으로만 존재하고 브라우저에는 내려오지 않는다.
 // 근거성 검증(태스크 4)은 아직 없음: 지금은 모델 응답이 검증 없이 그대로 표시된다.
 //
 // 주의: 이 파일은 일반 스크립트(type="module" 아님)로 로드된다. file://로 직접 열었을 때
@@ -26,31 +28,9 @@ const SUPABASE_ANON_KEY = "sb_publishable_g_OWgYOEPBNI3UXrG8jBtg_6p6smeuK";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const HISTORY_KEY = "financial-assistant-history";
-const API_KEY_STORAGE_KEY = "financial-assistant-api-key";
 const MAX_HISTORY_ENTRIES = 30;
 const MAX_STORED_INPUT_CHARS = 20000; // localStorage 용량 보호용 (원문 전체가 아니라 앞부분만 저장)
 const MAX_ANALYSIS_CHARS = 40000; // 이 이상은 잘라서 보냄 (비용/응답시간/컨텍스트 한도 보호용)
-
-const CLAUDE_MODEL = "claude-sonnet-5";
-
-const ANALYSIS_SYSTEM_PROMPT = `당신은 금융 지식이 부족한 비전공자를 돕는 "금융 리포트 이해 보조 어시스턴트"의 분석 엔진이다.
-사용자가 제공하는 금융 리포트 원문을 읽고, 아래 JSON 형식으로만 응답하라. 다른 설명, 마크다운 코드블록,
-서두/맺음말 없이 오직 JSON 객체 하나만 출력한다.
-
-{
-  "summary": "쉬운 말로 쓴 요약 (원문의 핵심 결론·수치를 빠뜨리지 않을 것)",
-  "keywords": [
-    { "term": "용어", "plain_explanation": "쉬운 설명", "source_quote": "원문에서 그대로 복사한 문장" }
-  ],
-  "insights": [
-    { "insight": "원문에 근거한 시사점", "category": "opportunity|risk|neutral", "source_quote": "원문에서 그대로 복사한 문장" }
-  ]
-}
-
-규칙:
-- source_quote는 반드시 원문에 실제로 있는 그대로의 문장/구절이어야 한다. 지어내지 않는다.
-- 투자 자문(구체적 매수/매도 추천)을 하지 않는다.
-- summary는 원문의 핵심 수치(성장률, 금액, 비율, 날짜 등)를 빠뜨리지 않는다.`;
 
 // ---------- localStorage 헬퍼 ----------
 
@@ -74,14 +54,6 @@ function addHistoryEntry(entry) {
   const trimmed = list.slice(0, MAX_HISTORY_ENTRIES);
   saveHistory(trimmed);
   return trimmed;
-}
-
-function getApiKey() {
-  return localStorage.getItem(API_KEY_STORAGE_KEY) || "";
-}
-
-function setApiKey(key) {
-  localStorage.setItem(API_KEY_STORAGE_KEY, key);
 }
 
 // ---------- Supabase 저장 ----------
@@ -148,12 +120,6 @@ navButtons.forEach((btn) => {
   btn.addEventListener("click", () => showScreen(btn.dataset.target));
 });
 
-// ---------- API 키 입력 ----------
-
-const apiKeyInput = document.getElementById("api-key-input");
-apiKeyInput.value = getApiKey();
-apiKeyInput.addEventListener("change", () => setApiKey(apiKeyInput.value.trim()));
-
 // ---------- PDF 업로드 (pdf.js) ----------
 
 async function extractPdfText(file) {
@@ -192,48 +158,25 @@ fileInput.addEventListener("change", async () => {
   }
 });
 
-// ---------- Claude API 호출 ----------
+// ---------- Claude 분석 (Supabase Edge Function 경유) ----------
+// Anthropic API 키는 브라우저에 두지 않는다. Edge Function(analyze-report)이
+// 서버 측 시크릿(ANTHROPIC_API_KEY)으로 Claude를 호출하고 결과만 돌려준다.
 
-async function callClaudeAnalysis(sourceText, apiKey) {
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-    },
-    body: JSON.stringify({
-      model: CLAUDE_MODEL,
-      max_tokens: 8000,
-      system: ANALYSIS_SYSTEM_PROMPT,
-      messages: [{ role: "user", content: sourceText }],
-    }),
+async function callClaudeAnalysis(sourceText) {
+  const { data, error } = await supabaseClient.functions.invoke("analyze-report", {
+    body: { text: sourceText },
   });
 
-  if (!response.ok) {
-    const errBody = await response.text();
-    throw new Error(`Claude API 오류 (${response.status}): ${errBody.slice(0, 300)}`);
+  if (error) {
+    throw new Error("분석 요청 실패: " + error.message);
   }
-
-  const data = await response.json();
-  const textBlock = (data.content || []).find((block) => block.type === "text");
-  if (!textBlock) {
-    throw new Error("모델 응답에서 텍스트를 찾을 수 없습니다.");
+  if (data?.error) {
+    throw new Error(data.error);
   }
-
-  const jsonText = textBlock.text.trim().replace(/^```json\s*|^```\s*|```$/g, "");
-  let parsed;
-  try {
-    parsed = JSON.parse(jsonText);
-  } catch (e) {
-    throw new Error("모델 응답을 JSON으로 해석하지 못했습니다: " + e.message);
-  }
-
-  if (!parsed.summary || !Array.isArray(parsed.keywords) || !Array.isArray(parsed.insights)) {
+  if (!data?.summary || !Array.isArray(data.keywords) || !Array.isArray(data.insights)) {
     throw new Error("모델 응답에 summary/keywords/insights가 모두 없습니다.");
   }
-  return parsed;
+  return data;
 }
 
 // ---------- 결과 렌더링 ----------
@@ -317,18 +260,10 @@ const analyzeBtn = document.getElementById("analyze-btn");
 const statusEl = document.getElementById("analyze-status");
 
 analyzeBtn.addEventListener("click", async () => {
-  const apiKey = getApiKey();
   let text = document.getElementById("text-input").value.trim();
 
   statusEl.classList.remove("error");
 
-  if (!apiKey) {
-    statusEl.textContent = "Claude API 키를 먼저 입력해주세요. 설정 화면으로 이동합니다.";
-    statusEl.classList.add("error");
-    showScreen("settings-screen");
-    apiKeyInput.focus();
-    return;
-  }
   if (!text) {
     statusEl.textContent = "분석할 텍스트를 붙여넣거나 PDF를 업로드해주세요.";
     statusEl.classList.add("error");
@@ -346,7 +281,7 @@ analyzeBtn.addEventListener("click", async () => {
 
   const startedAt = Date.now();
   try {
-    const result = await callClaudeAnalysis(text, apiKey);
+    const result = await callClaudeAnalysis(text);
     const durationMs = Date.now() - startedAt;
 
     renderResult(result);
@@ -369,7 +304,7 @@ analyzeBtn.addEventListener("click", async () => {
       inputText: text,
       truncated: Boolean(truncatedNote),
       result,
-      model: CLAUDE_MODEL,
+      model: result.model,
       durationMs,
     });
 
