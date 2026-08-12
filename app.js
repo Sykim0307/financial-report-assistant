@@ -46,9 +46,24 @@ function updateAuthUI(user) {
     userChip.hidden = false;
     userName.textContent = user.user_metadata?.full_name || user.email || "로그인됨";
     userAvatar.src = user.user_metadata?.avatar_url || "";
+    upsertProfile(user);
   } else {
     loginBtn.hidden = false;
     userChip.hidden = true;
+  }
+}
+
+// 랭킹에 이름/아바타를 보여주기 위해, 로그인할 때마다 본인 프로필만 갱신해둔다.
+async function upsertProfile(user) {
+  try {
+    await supabaseClient.from("profiles").upsert({
+      id: user.id,
+      display_name: user.user_metadata?.full_name || user.email || "익명",
+      avatar_url: user.user_metadata?.avatar_url || null,
+      updated_at: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.error("프로필 저장 실패:", e);
   }
 }
 
@@ -70,10 +85,12 @@ logoutBtn.addEventListener("click", async () => {
 supabaseClient.auth.onAuthStateChange((_event, session) => {
   updateAuthUI(session?.user || null);
   renderHistory();
+  checkUsage();
 });
 
 supabaseClient.auth.getSession().then(({ data }) => {
   updateAuthUI(data.session?.user || null);
+  checkUsage();
 });
 
 const HISTORY_KEY = "financial-assistant-history";
@@ -119,6 +136,7 @@ async function saveAnalysisToDb({ sourceName, sourceType, inputText, truncated, 
         input_char_count: inputText.length,
         truncated,
         report_title: result.report_title,
+        key_metrics: result.key_metrics || [],
         summary: result.summary_points.join("\n"),
         model,
         duration_ms: durationMs,
@@ -148,10 +166,59 @@ async function saveAnalysisToDb({ sourceName, sourceType, inputText, truncated, 
     ]);
     if (kwResult.error) throw kwResult.error;
     if (insResult.error) throw insResult.error;
+    return analysisRow.id;
   } catch (e) {
     console.error("Supabase 저장 실패 (localStorage 히스토리는 정상 저장됨):", e);
+    return null;
   }
 }
+
+// ---------- 결과 피드백 ----------
+
+let currentAnalysisId = null;
+
+function showFeedbackBox(analysisId) {
+  currentAnalysisId = analysisId;
+  const box = document.getElementById("feedback-box");
+  const upBtn = document.getElementById("feedback-up");
+  const downBtn = document.getElementById("feedback-down");
+  const thanks = document.getElementById("feedback-thanks");
+
+  if (!analysisId) {
+    box.hidden = true;
+    return;
+  }
+  box.hidden = false;
+  upBtn.disabled = false;
+  downBtn.disabled = false;
+  thanks.hidden = true;
+}
+
+async function submitFeedback(isHelpful) {
+  if (!currentAnalysisId) return;
+  const upBtn = document.getElementById("feedback-up");
+  const downBtn = document.getElementById("feedback-down");
+  const thanks = document.getElementById("feedback-thanks");
+
+  upBtn.disabled = true;
+  downBtn.disabled = true;
+  try {
+    const { error } = await supabaseClient.from("analysis_feedback").insert({
+      analysis_id: currentAnalysisId,
+      user_id: currentUser?.id || null,
+      is_helpful: isHelpful,
+    });
+    if (error) throw error;
+    thanks.hidden = false;
+  } catch (e) {
+    console.error("피드백 저장 실패:", e);
+    upBtn.disabled = false;
+    downBtn.disabled = false;
+  }
+}
+
+document.getElementById("feedback-up").addEventListener("click", () => submitFeedback(true));
+document.getElementById("feedback-down").addEventListener("click", () => submitFeedback(false));
 
 // ---------- 화면 전환 ----------
 
@@ -249,10 +316,27 @@ async function callClaudeAnalysis(sourceText) {
   });
 
   if (error) {
-    throw new Error("분석 요청 실패: " + error.message);
+    // Edge Function이 4xx/5xx를 반환하면 supabase-js는 data 없이 error만 채운다.
+    // 우리가 보낸 커스텀 JSON 에러 메시지(예: 사용량 초과)는 error.context(Response)에서 직접 읽어야 한다.
+    let message = error.message;
+    let usage = null;
+    if (error.context && typeof error.context.json === "function") {
+      try {
+        const body = await error.context.json();
+        if (body?.error) message = body.error;
+        if (body?.usage) usage = body.usage;
+      } catch {
+        // 본문이 JSON이 아니면 원래 메시지를 사용
+      }
+    }
+    const wrapped = new Error(message);
+    wrapped.usage = usage;
+    throw wrapped;
   }
   if (data?.error) {
-    throw new Error(data.error);
+    const wrapped = new Error(data.error);
+    wrapped.usage = data.usage || null;
+    throw wrapped;
   }
   if (
     !data?.report_title ||
@@ -266,12 +350,81 @@ async function callClaudeAnalysis(sourceText) {
   return data;
 }
 
+// ---------- 사용량 표시 ----------
+
+async function checkUsage() {
+  const indicator = document.getElementById("usage-indicator");
+  try {
+    const { data, error } = await supabaseClient.functions.invoke("analyze-report", {
+      body: { checkUsageOnly: true },
+    });
+    if (error || !data?.usage) return;
+    renderUsage(data.usage);
+  } catch {
+    // 사용량 조회 실패는 조용히 무시 (핵심 기능이 아님)
+  }
+}
+
+function renderUsage(usage) {
+  const indicator = document.getElementById("usage-indicator");
+  const remaining = Math.max(0, usage.limit - usage.count);
+  indicator.textContent = `오늘 사용량 ${usage.count}/${usage.limit}회${
+    remaining === 0 ? "" : ` (${remaining}회 남음)`
+  }${usage.isLoggedIn ? "" : " · 로그인하면 5회까지"}`;
+  indicator.classList.toggle("usage-full", remaining === 0);
+}
+
 // ---------- 결과 렌더링 ----------
+
+function renderStatTiles(keyMetrics) {
+  const row = document.getElementById("stat-tile-row");
+  row.innerHTML = "";
+  if (!keyMetrics.length) {
+    row.hidden = true;
+    return;
+  }
+  row.hidden = false;
+  keyMetrics.forEach((metric) => {
+    const tile = document.createElement("div");
+    tile.className = "stat-tile";
+    tile.innerHTML = `
+      <div class="stat-tile-label">${escapeHtml(metric.label)}</div>
+      <div class="stat-tile-value">${escapeHtml(metric.value)}</div>
+    `;
+    row.appendChild(tile);
+  });
+}
+
+function renderInsightMix(insights) {
+  const wrap = document.getElementById("insight-mix");
+  if (!insights.length) {
+    wrap.hidden = true;
+    return;
+  }
+  wrap.hidden = false;
+
+  const counts = { opportunity: 0, risk: 0, neutral: 0 };
+  insights.forEach((ins) => {
+    if (counts[ins.category] !== undefined) counts[ins.category]++;
+  });
+  const total = insights.length;
+
+  ["opportunity", "risk", "neutral"].forEach((cat) => {
+    const pct = total ? (counts[cat] / total) * 100 : 0;
+    document.getElementById(`insight-mix-seg-${cat}`).style.width = pct + "%";
+  });
+  document.getElementById("count-opportunity").textContent = counts.opportunity;
+  document.getElementById("count-risk").textContent = counts.risk;
+  document.getElementById("count-neutral").textContent = counts.neutral;
+}
 
 function renderResult(result) {
   const titleEl = document.getElementById("report-title-output");
   titleEl.textContent = result.report_title;
   titleEl.classList.remove("placeholder");
+
+  renderStatTiles(result.key_metrics || []);
+  renderInsightMix(result.insights || []);
 
   const summaryEl = document.getElementById("summary-output");
   summaryEl.classList.remove("placeholder");
@@ -334,7 +487,7 @@ async function fetchRecentAnalyses() {
   const { data, error } = await supabaseClient
     .from("analyses")
     .select(
-      `id, created_at, source_name, report_title, summary, model, duration_ms,
+      `id, created_at, source_name, report_title, summary, model, duration_ms, key_metrics,
        analysis_keywords ( term, plain_explanation, source_quote, position ),
        analysis_insights ( insight, category, source_quote, position )`
     )
@@ -350,6 +503,7 @@ async function fetchRecentAnalyses() {
     durationMs: row.duration_ms,
     result: {
       report_title: row.report_title,
+      key_metrics: row.key_metrics || [],
       summary_points: row.summary ? row.summary.split("\n") : [],
       keywords: [...row.analysis_keywords].sort((a, b) => a.position - b.position),
       insights: [...row.analysis_insights].sort((a, b) => a.position - b.position),
@@ -402,6 +556,7 @@ async function renderHistory() {
     li.textContent = `${title} · ${entry.createdAt} (${entry.durationMs}ms)`;
     li.addEventListener("click", () => {
       renderResult(entry.result);
+      showFeedbackBox(entry.id);
       showScreen("result-screen");
     });
     historyList.appendChild(li);
@@ -493,7 +648,7 @@ analyzeBtn.addEventListener("click", async () => {
     });
     renderHistory();
 
-    await saveAnalysisToDb({
+    const savedId = await saveAnalysisToDb({
       sourceName,
       sourceType,
       inputText: text,
@@ -502,18 +657,179 @@ analyzeBtn.addEventListener("click", async () => {
       model: result.model,
       durationMs,
     });
+    showFeedbackBox(savedId);
 
     statusEl.textContent = `분석 완료 (${(durationMs / 1000).toFixed(1)}초)${truncatedNote}`;
+    if (result.usage) {
+      renderUsage(result.usage);
+    } else {
+      checkUsage();
+    }
     showScreen("result-screen");
   } catch (e) {
     progress.stop();
     console.error(e);
-    statusEl.textContent = "분석 실패: " + e.message;
+    statusEl.textContent = e.usage ? e.message : "분석 실패: " + e.message;
     statusEl.classList.add("error");
+    if (e.usage) {
+      renderUsage(e.usage);
+    }
   } finally {
     analyzeBtn.disabled = false;
   }
 });
+
+// ---------- 금융 용어 퀴즈 ----------
+// 문제 원본은 그동안 공개(user_id NULL) 분석에서 쌓인 키워드에서만 뽑는다(get_quiz_terms 함수).
+// 로그인한 사람의 비공개 분석 속 용어는 퀴즈 문제로 노출하지 않는다.
+
+let quizQuestions = [];
+let quizIndex = 0;
+let quizCorrect = 0;
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+async function startQuiz() {
+  const startBox = document.getElementById("quiz-start-box");
+  const playBox = document.getElementById("quiz-play-box");
+  const resultBox = document.getElementById("quiz-result-box");
+
+  const { data: terms, error } = await supabaseClient.rpc("get_quiz_terms", { p_limit: 20 });
+  if (error || !terms || terms.length < 4) {
+    startBox.innerHTML =
+      '<p class="screen-desc">아직 퀴즈를 만들 만큼 용어가 쌓이지 않았어요. 분석을 몇 번 더 해보고 다시 와주세요!</p>';
+    return;
+  }
+
+  const picked = shuffleArray(terms).slice(0, Math.min(5, terms.length));
+  quizQuestions = picked.map((correct) => {
+    const distractorPool = terms.filter((t) => t.term !== correct.term);
+    const distractors = shuffleArray(distractorPool)
+      .slice(0, 3)
+      .map((t) => t.term);
+    return {
+      question: correct.plain_explanation,
+      answer: correct.term,
+      options: shuffleArray([correct.term, ...distractors]),
+    };
+  });
+  quizIndex = 0;
+  quizCorrect = 0;
+
+  startBox.hidden = true;
+  resultBox.hidden = true;
+  playBox.hidden = false;
+  document.getElementById("quiz-total-num").textContent = quizQuestions.length;
+  renderQuizQuestion();
+}
+
+function renderQuizQuestion() {
+  const q = quizQuestions[quizIndex];
+  document.getElementById("quiz-current-num").textContent = quizIndex + 1;
+  document.getElementById("quiz-score-num").textContent = quizCorrect;
+  document.getElementById("quiz-question-text").textContent = q.question;
+
+  const optionsEl = document.getElementById("quiz-options");
+  optionsEl.innerHTML = "";
+  q.options.forEach((opt) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "quiz-option";
+    btn.textContent = opt;
+    btn.addEventListener("click", () => selectQuizOption(opt, btn));
+    optionsEl.appendChild(btn);
+  });
+}
+
+function selectQuizOption(selected, btnEl) {
+  const q = quizQuestions[quizIndex];
+  const optionsEl = document.getElementById("quiz-options");
+  [...optionsEl.children].forEach((btn) => {
+    btn.disabled = true;
+    if (btn.textContent === q.answer) btn.classList.add("quiz-option--correct");
+  });
+  if (selected === q.answer) {
+    quizCorrect++;
+  } else {
+    btnEl.classList.add("quiz-option--wrong");
+  }
+
+  setTimeout(() => {
+    quizIndex++;
+    if (quizIndex < quizQuestions.length) {
+      renderQuizQuestion();
+    } else {
+      finishQuiz();
+    }
+  }, 900);
+}
+
+async function finishQuiz() {
+  document.getElementById("quiz-play-box").hidden = true;
+  const resultBox = document.getElementById("quiz-result-box");
+  resultBox.hidden = false;
+  document.getElementById("quiz-result-title").textContent = `${quizCorrect} / ${quizQuestions.length} 정답!`;
+
+  const noteEl = document.getElementById("quiz-result-note");
+  if (currentUser) {
+    try {
+      const { error } = await supabaseClient.from("quiz_scores").insert({
+        user_id: currentUser.id,
+        correct_count: quizCorrect,
+        total_count: quizQuestions.length,
+      });
+      if (error) throw error;
+      noteEl.textContent = "랭킹에 반영됐어요!";
+    } catch (e) {
+      console.error("퀴즈 점수 저장 실패:", e);
+      noteEl.textContent = "점수 저장에 실패했어요. 다시 시도해주세요.";
+    }
+  } else {
+    noteEl.textContent = "로그인하면 이 점수가 랭킹에 반영돼요.";
+  }
+  renderLeaderboard();
+}
+
+async function renderLeaderboard() {
+  const list = document.getElementById("leaderboard-list");
+  const { data, error } = await supabaseClient.rpc("get_quiz_leaderboard", { p_limit: 10 });
+  if (error) {
+    console.error("랭킹 조회 실패:", error);
+    return;
+  }
+  list.innerHTML = "";
+  if (!data || !data.length) {
+    list.innerHTML = '<li class="placeholder">아직 랭킹에 참여한 사람이 없어요. 첫 번째 도전자가 되어보세요!</li>';
+    return;
+  }
+  data.forEach((row, i) => {
+    const li = document.createElement("li");
+    li.className = "leaderboard-item";
+    const name = row.display_name || "익명";
+    const accuracy = row.total_played ? Math.round((row.total_correct / row.total_played) * 100) : 0;
+    const avatarHtml = row.avatar_url
+      ? `<img src="${escapeHtml(row.avatar_url)}" class="leaderboard-avatar" alt="">`
+      : `<span class="leaderboard-avatar"></span>`;
+    li.innerHTML = `
+      <span class="leaderboard-rank">${i + 1}</span>
+      ${avatarHtml}
+      <span class="leaderboard-name">${escapeHtml(name)}</span>
+      <span class="leaderboard-score">${row.total_correct}문제 정답 · ${row.games_played}회 도전 · 정답률 ${accuracy}%</span>
+    `;
+    list.appendChild(li);
+  });
+}
+
+document.getElementById("quiz-start-btn").addEventListener("click", startQuiz);
+document.getElementById("quiz-retry-btn").addEventListener("click", startQuiz);
+document.getElementById("quiz-nav-btn").addEventListener("click", renderLeaderboard);
 
 // ---------- 초기화 ----------
 
