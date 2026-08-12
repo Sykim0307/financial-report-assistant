@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>금융 리포트 이해 보조 어시스턴트</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1>금융 리포트 이해 보조 어시스턴트</h1>
+  <nav class="screen-nav">
+    <button type="button" class="nav-btn" data-target="input-screen">입력</button>
+    <button type="button" class="nav-btn" data-target="result-screen">결과</button>
+    <button type="button" class="nav-btn" data-target="history-screen">히스토리</button>
+  </nav>
+</header>
+
+<main>
+
+  <section id="input-screen" class="screen">
+    <h2>리포트 입력</h2>
+    <div class="field">
+      <label for="file-input">파일 업로드 (PDF)</label>
+      <input type="file" id="file-input" accept="application/pdf">
+    </div>
+    <div class="field">
+      <label for="text-input">또는 텍스트 붙여넣기</label>
+      <textarea id="text-input" rows="10" placeholder="분석할 리포트 텍스트를 붙여넣으세요"></textarea>
+    </div>
+    <button type="button" id="analyze-btn" class="primary-btn">분석 시작</button>
+  </section>
+
+  <section id="result-screen" class="screen">
+    <h2>분석 결과</h2>
+    <article class="result-block">
+      <h3>쉬운 요약</h3>
+      <p id="summary-output" class="placeholder">아직 분석 결과가 없습니다.</p>
+    </article>
+    <article class="result-block">
+      <h3>키워드 설명</h3>
+      <div id="keywords-output" class="placeholder">아직 분석 결과가 없습니다.</div>
+    </article>
+    <article class="result-block">
+      <h3>인사이트</h3>
+      <ul id="insights-output" class="placeholder">
+        <li>아직 분석 결과가 없습니다.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section id="history-screen" class="screen">
+    <h2>히스토리</h2>
+    <ul id="history-list" class="placeholder">
+      <li>저장된 분석 기록이 없습니다.</li>
+    </ul>
+  </section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
